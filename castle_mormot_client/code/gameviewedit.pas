@@ -125,7 +125,7 @@ begin
     OrmTransform := TObject(OrmTransformObj) as TOrmCastleTransform;
     Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
     EditableAssetsParent.Add(Transform);
-    // FreeAndNil(OrmTransform); // TODO test
+    // FreeAndNil(OrmTransform); // do not free OrmTransform, it will get freed by FreeAndNil(AllOrmTransforms)
   end;
   FreeAndNil(AllOrmTransforms);
 
@@ -167,16 +167,49 @@ procedure TViewedit.Update(const SecondsPassed: Single; var HandleInput: boolean
     Sel: TCastleTransform; //< selected transform
   begin
     Sel := VisualizeSelected.Parent;
+
+    { TODO: This code to update feels a bit dirty -- calling UpdateField
+      3 or 4 times is probably not optimal, and in general it feels not cool
+      that we cannot use
+
+        HttpClient.Orm.Update(TOrm)
+
+      However, we don't have TOrmCastleTransform instance at this point.
+      We could make it... but it would not have correct ID, as TOrm.ID is read-only,
+      we cannot just set it from Sel.Tag.
+      In general, all HttpClient.Orm.Update* feel a bit unsuitable for this case.
+
+      There are no practical problems with this though, so maybe just accept
+      it as the way to do it. }
+
     case TransformMode of
       tmTranslate:
-        Sel.Translation := Sel.Translation + SecondsPassed * 10 * Vector3(Delta.X, 0, Delta.Y);
+        begin
+          Sel.Translation := Sel.Translation + SecondsPassed * 10 * Vector3(Delta.X, 0, Delta.Y);
+          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationX', Sel.Translation.X) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationY', Sel.Translation.Y) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationZ', Sel.Translation.Z) then
+            raise Exception.Create('Failed to update the server');
+        end;
       tmRotate:
-        Sel.Rotation := Vector4(0, 1, 0, Sel.Rotation.W + Delta.X * SecondsPassed);
+        begin
+          Sel.Rotation := Vector4(0, 1, 0, Sel.Rotation.W + Delta.X * SecondsPassed);
+          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationX', Sel.Rotation.X) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationY', Sel.Rotation.Y) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationZ', Sel.Rotation.Z) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationW', Sel.Rotation.W) then
+            raise Exception.Create('Failed to update the server');
+        end;
       tmScale:
-        Sel.Scale := MaxVector(Vector3(0.1, 0.1, 0.1), Sel.Scale + SecondsPassed * Vector3(Delta.X, 0, Delta.Y));
+        begin
+          Sel.Scale := MaxVector(Vector3(0.1, 0.1, 0.1), Sel.Scale + SecondsPassed * Vector3(Delta.X, 0, Delta.Y));
+          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleX', Sel.Scale.X) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleY', Sel.Scale.Y) or
+             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleZ', Sel.Scale.Z) then
+            raise Exception.Create('Failed to update the server');
+        end;
       else raise EInternalError.Create('TransformMode?');
     end;
-    // TODO: synch with server
   end;
 
 begin
