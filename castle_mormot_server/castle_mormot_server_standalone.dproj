@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{3667236A-D17C-4AF8-A0E0-1B809AF56DC0}</ProjectGuid>
+        <ProjectGuid>{34016D12-2DC5-4C8F-A416-E61379867025}</ProjectGuid>
         <MainSource>castle_mormot_server_standalone.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
@@ -100,7 +100,7 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
-        <DCC_UnitSearchPath>C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/common_includes;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/android;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/unix;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering/dglopengl;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering/glsl/generated-pascal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/fonts;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/gtk;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/unix;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/deprecated_units;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/images;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/transform;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/glsl/generated-pascal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/x3d;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/spine;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/md3;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/collada;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/pasgltf;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/fmod;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/openal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/ogg_vorbis;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/files;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/files/indy;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/castlescript;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/ui;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/ui/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/services;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/physics;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/physics/kraft;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/deprecated_units;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source/JpegLib;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source/ZLib;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extras/Extensions;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions/J2KObjects;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions/LibTiff;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/delphi;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/compatibility/delphi-only;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/compatibility/delphi-only/fcl-json;code/;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/common_includes;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/android;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base/unix;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering/dglopengl;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/base_rendering/glsl/generated-pascal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/fonts;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/gtk;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/unix;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/window/deprecated_units;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/images;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/transform;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/glsl/generated-pascal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/x3d;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/spine;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/md3;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/collada;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/scene/load/pasgltf;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/fmod;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/openal;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/audio/ogg_vorbis;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/files;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/files/indy;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/castlescript;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/ui;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/ui/windows;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/services;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/physics;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/physics/kraft;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/deprecated_units;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source/JpegLib;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Source/ZLib;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extras/Extensions;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions/J2KObjects;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions/LibTiff;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/vampyre_imaginglib/src/Extensions;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/delphi;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/compatibility/delphi-only;C:/cygwin64/home/michalis/sources/castle-engine/castle-engine/src/compatibility/delphi-only/fcl-json;code/;../shared;../../../sorpetaler/mORMot2/src;../../../sorpetaler/mORMot2/src/core;../../../sorpetaler/mORMot2/src/lib;../../../sorpetaler/mORMot2/src/crypt;../../../sorpetaler/mORMot2/src/net;../../../sorpetaler/mORMot2/src/db;../../../sorpetaler/mORMot2/src/rest;../../../sorpetaler/mORMot2/src/orm;../../../sorpetaler/mORMot2/src/soa;../../../sorpetaler/mORMot2/src/app;../../../sorpetaler/mORMot2/src/script;../../../sorpetaler/mORMot2/src/ui;../../../sorpetaler/mORMot2/src/tools;../../../sorpetaler/mORMot2/src/misc;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>castle-engine-output\delphi\$(Platform)\$(Config)</DCC_DcuOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
@@ -272,113 +272,6 @@
                 </DeployFile>
 
                 <!-- Deploy data files -->
-<!-- Auto-generated list of deploy files.
-     We need to list all "data" files to deploy Delphi applications
-     to non-Windows targets,
-     see https://castle-engine.io/delphi_linux#data_files_deployment .
--->
-<DeployFile LocalName="data\CastleSettings.xml" Configuration="Debug" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
-<DeployFile LocalName="data\gameviewmain.castle-user-interface" Configuration="Debug" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
-<DeployFile LocalName="data\README.txt" Configuration="Debug" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
-<DeployFile LocalName="data\CastleSettings.xml" Configuration="Release" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>CastleSettings.xml</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
-<DeployFile LocalName="data\gameviewmain.castle-user-interface" Configuration="Release" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>gameviewmain.castle-user-interface</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
-<DeployFile LocalName="data\README.txt" Configuration="Release" Class="File">
- <Platform Name="Linux64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win32">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
- <Platform Name="Win64">
-  <RemoteDir>./data/</RemoteDir>
-  <RemoteName>README.txt</RemoteName>
-  <Overwrite>true</Overwrite>
- </Platform>
-</DeployFile>
 
 
                 <DeployClass Name="AdditionalDebugSymbols">
