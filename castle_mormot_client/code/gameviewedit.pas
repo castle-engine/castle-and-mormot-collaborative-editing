@@ -309,7 +309,8 @@ begin
     { Remove from the server.
       We know that TCastleTransform.Tag holds the ID of the TOrmCastleTransform. }
     WriteLnLog('Deleting from server: %d', [VisualizeSelected.Parent.Tag]);
-    HttpClient.Orm.Delete(TOrmCastleTransform, VisualizeSelected.Parent.Tag);
+    if not HttpClient.Orm.Delete(TOrmCastleTransform, VisualizeSelected.Parent.Tag) then
+      raise Exception.Create('Failed to delete from the server');
     VisualizeSelected.Parent.Free; // this also clears VisualizeSelected.Parent
   end;
 end;
