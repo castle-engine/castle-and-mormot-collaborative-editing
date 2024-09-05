@@ -16,7 +16,9 @@ unit SharedData;
 
 interface
 
-uses Mormot.Core.Base, Mormot.Orm.Base, Mormot.Orm.Core;
+uses Classes,
+  Mormot.Core.Base, Mormot.Orm.Base, Mormot.Orm.Core,
+  CastleTransform;
 
 type
   { A 3D object that can be send over the network and persisted.
@@ -50,6 +52,18 @@ type
     FScaleX: Double;
     FScaleY: Double;
     FScaleZ: Double;
+  public
+    { Create TCastleTransform instance corresponding to this ORM state.
+
+      Owner is the owner of the created TCastleTransform instance.
+      Caller is responsible for freeing the result.
+
+      Inside it, there may be a child (like TCastleScene) created,
+      which is owned by the returned TCastleTransform instance. }
+    function CreateTransform(const Owner: TComponent): TCastleTransform;
+
+    { Update an existing TCastleTransform instance to reflect state of this ORM. }
+    procedure UpdateTransform(const Instance: TCastleTransform);
   published
     { Unique name that identifies the object.
       Will be used for TComponent.Name of CGE components. }
@@ -72,9 +86,76 @@ function CreateOrmModel: TOrmModel;
 
 implementation
 
+uses SysUtils,
+  CastleUriUtils, CastleScene, CastleVectors, CastleLog;
+
 function CreateOrmModel: TOrmModel;
 begin
   Result := TOrmModel.Create([TOrmCastleTransform]);
+end;
+
+{ TOrmCastleTransform ------------------------------------------------------- }
+
+function TOrmCastleTransform.CreateTransform(const Owner: TComponent): TCastleTransform;
+begin
+  Result := TCastleTransform.Create(Owner);
+  UpdateTransform(Result);
+end;
+
+procedure TOrmCastleTransform.UpdateTransform(const Instance: TCastleTransform);
+
+  procedure ClearChildren;
+  begin
+    while Instance.Count > 0 do
+      Instance[0].Free; // this also removes from the list
+  end;
+
+  function MakeChildClass(const TransformClass: TCastleTransformClass): TCastleTransform;
+  begin
+    if (Instance.Count > 0) and (Instance[0] is TransformClass) then
+      Result := Instance[0]
+    else
+    begin
+      ClearChildren;
+      Result := TransformClass.Create(Instance);
+      Instance.Add(Result);
+    end;
+  end;
+
+var
+  Scene: TCastleScene;
+  Sphere: TCastleSphere;
+  Box: TCastleBox;
+begin
+  Instance.Name := FName;
+  Instance.Translation := Vector3(FTranslationX, FTranslationY, FTranslationZ);
+  Instance.Rotation := Vector4(FRotationX, FRotationY, FRotationZ, FRotationW);
+  Instance.Scale := Vector3(FScaleX, FScaleY, FScaleZ);
+  if FUrl = 'castle-primitive:/sphere' then
+  begin
+    Sphere := MakeChildClass(TCastleSphere) as TCastleSphere;
+    Sphere.PreciseCollisions := true;
+  end else
+  if FUrl = 'castle-primitive:/box' then
+  begin
+    Box := MakeChildClass(TCastleBox) as TCastleBox;
+    Box.PreciseCollisions := true;
+  end else
+  if UriProtocol(FUrl) = 'castle-data' then
+  begin
+    Scene := MakeChildClass(TCastleScene) as TCastleScene;
+    Scene.PreciseCollisions := true;
+    Scene.Url := FUrl;
+    // just to look nice, play the first animation
+    if Scene.AnimationsList.Count > 0 then
+      Scene.PlayAnimation(Scene.AnimationsList[0], true);
+  end else
+  begin
+    ClearChildren;
+    WritelnWarning('Invalid URL for TOrmCastleTransform, ignoring: %s', [
+      UriDisplay(FUrl)
+    ]);
+  end;
 end;
 
 end.

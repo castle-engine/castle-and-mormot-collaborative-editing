@@ -56,3 +56,10 @@ Compile by:
 - Or use [Lazarus](https://www.lazarus-ide.org/). Open in Lazarus `castle_mormot_client.lpi` (or `castle_mormot_server.lpi`) file and compile / run from Lazarus. Make sure to first register [CGE Lazarus packages](https://castle-engine.io/lazarus).
 
 - Or use [Delphi](https://www.embarcadero.com/products/Delphi). Open in Delphi `castle_mormot_client.dproj` (or `castle_mormot_server.dproj`) file and compile / run from Delphi. See [CGE and Delphi](https://castle-engine.io/delphi) documentation for details.
+
+## TODO
+
+- For collaborative editing, actually watch for changes from others done to the world. This is not implemented yet, we only synchronize from server at Start.
+- Allow choosing specific asset to add (TCastleComboBox), not random.
+- Allow to select, move, rotate, scale object, just like editor.
+- Remove selected.
