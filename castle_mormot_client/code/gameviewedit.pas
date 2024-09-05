@@ -29,23 +29,34 @@ type
       These fields will be automatically initialized at Start. }
     LabelFps: TCastleLabel;
     FlyNavigation: TCastleWalkNavigation;
-    ButtonAddRandom, ButtonAddSphere, ButtonAddBox, ButtonClearAll: TCastleButton;
+    ButtonAddRandom, ButtonAddSphere, ButtonAddBox, ButtonDelete, ButtonClearAll: TCastleButton;
+    ButtonTranslate, ButtonRotate, ButtonScale: TCastleButton;
     EditableAssetsParent: TCastleTransform;
     MainViewport: TCastleViewport;
   private
-    { List of URLs of assets that can be placed in TOrmCastleTransform. }
-    EditableAssets: TStringList;
-    { All instances of TCastleTransform created from TOrmCastleTransform
-      will be owned by this component. They cannot be just owned by FreeAtStop
-      because they need a separate owner, as their names are in a separate namespace. }
-    EditableAssetsOwner: TComponent;
-    VisualizeSelected, VisualizeHover: TDebugTransformBox;
+    type
+      TTransformMode = (tmTranslate, tmRotate, tmScale);
+    var
+      { List of URLs of assets that can be placed in TOrmCastleTransform. }
+      EditableAssets: TStringList;
+      { All instances of TCastleTransform created from TOrmCastleTransform
+        will be owned by this component. They cannot be just owned by FreeAtStop
+        because they need a separate owner, as their names are in a separate namespace. }
+      EditableAssetsOwner: TComponent;
+      VisualizeSelected, VisualizeHover: TDebugTransformBox;
+      TransformMode: TTransformMode;
     procedure FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
     procedure ClickAddBox(Sender: TObject);
+    procedure ClickDelete(Sender: TObject);
     procedure ClickClearAll(Sender: TObject);
     procedure NewEditableAsset(const NewUrl: String);
+    { Set Pressed state of 3 buttons based on TransformMode. }
+    procedure UpdateTransformButtons;
+    procedure ClickTranslate(Sender: TObject);
+    procedure ClickRotate(Sender: TObject);
+    procedure ClickScale(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     procedure Start; override;
@@ -59,10 +70,10 @@ var
 
 implementation
 
-uses SysUtils, Contnrs,
+uses SysUtils, Contnrs, Math,
   Mormot.Core.Unicode,
   CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
-  SharedData, GameConnection;
+  SharedData, GameConnection, CastleUtils;
 
 constructor TViewedit.Create(AOwner: TComponent);
 begin
@@ -80,14 +91,23 @@ begin
   inherited;
 
   // assign events
-  ButtonAddRandom.OnClick := @ClickAddRandom;
-  ButtonAddSphere.OnClick := @ClickAddSphere;
-  ButtonAddBox.OnClick := @ClickAddBox;
-  ButtonClearAll.OnClick := @ClickClearAll;
+  ButtonAddRandom.OnClick := {$ifdef FPC}@{$endif} ClickAddRandom;
+  ButtonAddSphere.OnClick := {$ifdef FPC}@{$endif} ClickAddSphere;
+  ButtonAddBox.OnClick := {$ifdef FPC}@{$endif} ClickAddBox;
+  ButtonDelete.OnClick := {$ifdef FPC}@{$endif} ClickDelete;
+  ButtonClearAll.OnClick := {$ifdef FPC}@{$endif} ClickClearAll;
+  ButtonTranslate.OnClick := {$ifdef FPC}@{$endif} ClickTranslate;
+  ButtonRotate.OnClick := {$ifdef FPC}@{$endif} ClickRotate;
+  ButtonScale.OnClick := {$ifdef FPC}@{$endif} ClickScale;
 
   // adjust FlyNavigation settings
   FlyNavigation.Input_Jump.Assign(keyE);
   FlyNavigation.Input_Crouch.Assign(keyQ);
+  // do not use arrow keys, we need to have them free to manipulate objects
+  FlyNavigation.Input_Forward.MakeClear;
+  FlyNavigation.Input_Backward.MakeClear;
+  FlyNavigation.Input_LeftRotate.MakeClear;
+  FlyNavigation.Input_RightRotate.MakeClear;
 
   // calculate EditableAssets
   EditableAssets := TStringList.Create;
@@ -121,6 +141,9 @@ begin
   VisualizeSelected := TDebugTransformBox.Create(FreeAtStop);
   VisualizeSelected.BoxColor := ColorOpacity(White, 0.25);
   VisualizeSelected.Exists := true;
+
+  TransformMode := tmTranslate;
+  UpdateTransformButtons;
 end;
 
 procedure TViewedit.Stop;
@@ -130,6 +153,32 @@ begin
 end;
 
 procedure TViewedit.Update(const SecondsPassed: Single; var HandleInput: boolean);
+
+  { Component-wise maximum of two vectors. }
+  function MaxVector(const A, B: TVector3): TVector3;
+  begin
+    Result := Vector3(Max(A.X, B.X), Max(A.Y, B.Y), Max(A.Z, B.Z));
+  end;
+
+  { Perform transformation (given by TransformMode) on a selected object
+    (given by VisualizeSelected.Parent) by Delta * SecondsPassed. }
+  procedure Transform(const Delta: TVector2);
+  var
+    Sel: TCastleTransform; //< selected transform
+  begin
+    Sel := VisualizeSelected.Parent;
+    case TransformMode of
+      tmTranslate:
+        Sel.Translation := Sel.Translation + SecondsPassed * 10 * Vector3(Delta.X, 0, Delta.Y);
+      tmRotate:
+        Sel.Rotation := Vector4(0, 1, 0, Sel.Rotation.W + Delta.X * SecondsPassed);
+      tmScale:
+        Sel.Scale := MaxVector(Vector3(0.1, 0.1, 0.1), Sel.Scale + SecondsPassed * Vector3(Delta.X, 0, Delta.Y));
+      else raise EInternalError.Create('TransformMode?');
+    end;
+    // TODO: synch with server
+  end;
+
 begin
   inherited;
 
@@ -145,6 +194,18 @@ begin
     VisualizeHover.Parent := MainViewport.TransformUnderMouse
   else
     VisualizeHover.Parent := nil;
+
+  if VisualizeSelected.Parent <> nil then
+  begin
+    if Container.Pressed[keyArrowLeft] then
+      Transform(Vector2(-1, 0));
+    if Container.Pressed[keyArrowRight] then
+      Transform(Vector2(1, 0));
+    if Container.Pressed[keyArrowUp] then
+      Transform(Vector2(0, -1));
+    if Container.Pressed[keyArrowDown] then
+      Transform(Vector2(0, 1));
+  end;
 end;
 
 function TViewedit.Press(const Event: TInputPressRelease): Boolean;
@@ -237,6 +298,18 @@ begin
   NewEditableAsset('castle-primitive:/box');
 end;
 
+procedure TViewedit.ClickDelete(Sender: TObject);
+begin
+  if VisualizeSelected.Parent <> nil then
+  begin
+    { Remove from the server. }
+    // TODO: use ID?
+    HttpClient.Orm.Delete(TOrmCastleTransform, 'Name=?', [VisualizeSelected.Parent.Name]);
+
+    VisualizeSelected.Parent.Free; // this also clears VisualizeSelected.Parent
+  end;
+end;
+
 procedure TViewedit.ClickClearAll(Sender: TObject);
 begin
   while EditableAssetsParent.Count > 0 do
@@ -245,6 +318,31 @@ begin
     This way of removing means we also remove invalid ORM data,
     that was not reflected in any TCastleTransform instance, but was on server. }
   HttpClient.Orm.Delete(TOrmCastleTransform, '1=1', []);
+end;
+
+procedure TViewedit.UpdateTransformButtons;
+begin
+  ButtonTranslate.Pressed := TransformMode = tmTranslate;
+  ButtonRotate.Pressed := TransformMode = tmRotate;
+  ButtonScale.Pressed := TransformMode = tmScale;
+end;
+
+procedure TViewedit.ClickTranslate(Sender: TObject);
+begin
+  TransformMode := tmTranslate;
+  UpdateTransformButtons;
+end;
+
+procedure TViewedit.ClickRotate(Sender: TObject);
+begin
+  TransformMode := tmRotate;
+  UpdateTransformButtons;
+end;
+
+procedure TViewedit.ClickScale(Sender: TObject);
+begin
+  TransformMode := tmScale;
+  UpdateTransformButtons;
 end;
 
 end.
