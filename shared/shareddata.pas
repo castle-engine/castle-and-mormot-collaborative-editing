@@ -20,9 +20,6 @@ interface
 
 uses Mormot.Core.Base, Mormot.Orm.Base, Mormot.Orm.Core;
 
-const
-  HttpPort = '11111';
-
 type
   { A 3D object that can be send over the network and persisted.
     This maps to a Castle Game Engine component
