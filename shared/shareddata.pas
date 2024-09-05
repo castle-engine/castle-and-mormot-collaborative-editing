@@ -127,6 +127,10 @@ var
   Sphere: TCastleSphere;
   Box: TCastleBox;
 begin
+  {$ifdef CPU32}
+    {$message warn 'TODO: This code is not safe on 32-bit platforms, as it assumes Tag can hold 64-bit ID.'}
+  {$endif}
+  Instance.Tag := ID;
   Instance.Name := FName;
   Instance.Translation := Vector3(FTranslationX, FTranslationY, FTranslationZ);
   Instance.Rotation := Vector4(FRotationX, FRotationY, FRotationZ, FRotationW);

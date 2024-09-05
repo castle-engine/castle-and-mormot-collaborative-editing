@@ -191,7 +191,10 @@ begin
   if (MainViewport.TransformUnderMouse <> nil) and
      (MainViewport.TransformUnderMouse.Parent <> nil) and
      (MainViewport.TransformUnderMouse.Parent.Parent = EditableAssetsParent) then
-    VisualizeHover.Parent := MainViewport.TransformUnderMouse
+    { We use TransformUnderMouse.Parent, because this TCastleTransform
+      corresponds to TOrmCastleTransform, and has Tag equal ORM ID,
+      which is critical to synchronize operations with the server. }
+    VisualizeHover.Parent := MainViewport.TransformUnderMouse.Parent
   else
     VisualizeHover.Parent := nil;
 
@@ -273,9 +276,10 @@ begin
     if HttpClient.Orm.Add(OrmTransform, true) = 0 then
       raise Exception.Create('Failed to add new asset to the server');
 
-    WritelnLog('Added random asset (name: %s, url: %s)', [
+    WritelnLog('Added random asset (name: %s, url: %s, ORM id: %d)', [
       OrmTransform.Name,
-      OrmTransform.Url
+      OrmTransform.Url,
+      OrmTransform.ID // this was updated by HttpClient.Orm.Add above
     ]);
 
     Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
@@ -302,10 +306,10 @@ procedure TViewedit.ClickDelete(Sender: TObject);
 begin
   if VisualizeSelected.Parent <> nil then
   begin
-    { Remove from the server. }
-    // TODO: use ID?
-    HttpClient.Orm.Delete(TOrmCastleTransform, 'Name=?', [VisualizeSelected.Parent.Name]);
-
+    { Remove from the server.
+      We know that TCastleTransform.Tag holds the ID of the TOrmCastleTransform. }
+    WriteLnLog('Deleting from server: %d', [VisualizeSelected.Parent.Tag]);
+    HttpClient.Orm.Delete(TOrmCastleTransform, VisualizeSelected.Parent.Tag);
     VisualizeSelected.Parent.Free; // this also clears VisualizeSelected.Parent
   end;
 end;
