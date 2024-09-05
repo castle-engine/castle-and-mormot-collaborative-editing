@@ -315,7 +315,7 @@
           }
         ]
       },
-      "Name" : "Viewport1",
+      "Name" : "MainViewport",
       "TranslationPersistent" : {
         "$$ClassName" : "TCastleVector2Persistent"
       },

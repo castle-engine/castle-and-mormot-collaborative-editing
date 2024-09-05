@@ -18,7 +18,8 @@ interface
 
 uses Classes,
   CastleVectors, CastleUIControls, CastleControls, CastleKeysMouse,
-  CastleCameras, CastleFindFiles, CastleTransform;
+  CastleCameras, CastleFindFiles, CastleTransform, CastleDebugTransform,
+  CastleViewport;
 
 type
   { View to edit the world. }
@@ -30,6 +31,7 @@ type
     FlyNavigation: TCastleWalkNavigation;
     ButtonAddRandom, ButtonAddSphere, ButtonAddBox, ButtonClearAll: TCastleButton;
     EditableAssetsParent: TCastleTransform;
+    MainViewport: TCastleViewport;
   private
     { List of URLs of assets that can be placed in TOrmCastleTransform. }
     EditableAssets: TStringList;
@@ -37,6 +39,7 @@ type
       will be owned by this component. They cannot be just owned by FreeAtStop
       because they need a separate owner, as their names are in a separate namespace. }
     EditableAssetsOwner: TComponent;
+    VisualizeSelected, VisualizeHover: TDebugTransformBox;
     procedure FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
@@ -48,6 +51,7 @@ type
     procedure Start; override;
     procedure Stop; override;
     procedure Update(const SecondsPassed: Single; var HandleInput: boolean); override;
+    function Press(const Event: TInputPressRelease): Boolean; override;
   end;
 
 var
@@ -57,7 +61,7 @@ implementation
 
 uses SysUtils, Contnrs,
   Mormot.Core.Unicode,
-  CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils,
+  CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
   SharedData, GameConnection;
 
 constructor TViewedit.Create(AOwner: TComponent);
@@ -104,6 +108,19 @@ begin
     // FreeAndNil(OrmTransform); // TODO test
   end;
   FreeAndNil(AllOrmTransforms);
+
+  { Tracking hover and selected objects.
+    The TDebugTransformBox instances visualize the currently hovered over / selected
+    TCastleTransform.
+    They also automatically handle "what happens when Parent is freed".
+    So we just use VisualizeHover.Parent and VisualizeSelected.Parent to track it. }
+  VisualizeHover := TDebugTransformBox.Create(FreeAtStop);
+  VisualizeHover.BoxColor := ColorOpacity(HexToColor('fffba0'), 0.25);
+  VisualizeHover.Exists := true;
+
+  VisualizeSelected := TDebugTransformBox.Create(FreeAtStop);
+  VisualizeSelected.BoxColor := ColorOpacity(White, 0.25);
+  VisualizeSelected.Exists := true;
 end;
 
 procedure TViewedit.Stop;
@@ -120,6 +137,26 @@ begin
   LabelFps.Caption := 'FPS: ' + Container.Fps.ToString;
 
   FlyNavigation.MouseLook := buttonRight in Container.MousePressed;
+
+  // update VisualizeHover
+  if (MainViewport.TransformUnderMouse <> nil) and
+     (MainViewport.TransformUnderMouse.Parent <> nil) and
+     (MainViewport.TransformUnderMouse.Parent.Parent = EditableAssetsParent) then
+    VisualizeHover.Parent := MainViewport.TransformUnderMouse
+  else
+    VisualizeHover.Parent := nil;
+end;
+
+function TViewedit.Press(const Event: TInputPressRelease): Boolean;
+begin
+  Result := inherited;
+  if Result then Exit;
+
+  if Event.IsMouseButton(buttonLeft) and (VisualizeHover.Parent <> nil) then
+  begin
+    VisualizeSelected.Parent := VisualizeHover.Parent;
+    Exit(true);
+  end;
 end;
 
 procedure TViewedit.FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
