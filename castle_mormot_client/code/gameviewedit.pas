@@ -104,8 +104,8 @@ begin
   FlyNavigation.Input_Jump.Assign(keyE);
   FlyNavigation.Input_Crouch.Assign(keyQ);
   // do not use arrow keys, we need to have them free to manipulate objects
-  FlyNavigation.Input_Forward.MakeClear;
-  FlyNavigation.Input_Backward.MakeClear;
+  FlyNavigation.Input_Forward.Assign(keyW);
+  FlyNavigation.Input_Backward.Assign(keyS);
   FlyNavigation.Input_LeftRotate.MakeClear;
   FlyNavigation.Input_RightRotate.MakeClear;
 
