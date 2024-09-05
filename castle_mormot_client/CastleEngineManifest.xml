@@ -12,6 +12,12 @@ See https://castle-engine.io/project_manifest for documentation of this file.
   caption="Client - Collaborative editing using Castle Game Engine and mORMot2"
 >
   <compiler_options>
+  <!--
+    It seems we cannot use FPC HeapTrc (detect_memory_leaks) with mORMot2,
+    attempt to do so causes an Access Violation on process exit,
+    if only we create HttpClient.
+  -->
+  <!--compiler_options detect_memory_leaks="true"-->
     <search_paths>
       <path value="code" />
       <path value="../shared" />
