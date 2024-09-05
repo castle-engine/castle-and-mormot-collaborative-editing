@@ -5,15 +5,16 @@ Specify basic information about the project, including how this project is build
 See https://castle-engine.io/project_manifest for documentation of this file.
 -->
 
-<project name="castle_mormot_client"
-  standalone_source="castle_mormot_client_standalone.dpr"
+<project name="castle_mormot_server"
+  standalone_source="castle_mormot_server_standalone.dpr"
   game_units="GameInitialize"
-  qualified_name="io.castleengine.castle.mormot.client"
-  caption="Client - Collaborative editing using Castle Game Engine and mORMot2"
+  qualified_name="io.castleengine.castle.mormot.server"
+  caption="Server - Collaborative editing using Castle Game Engine and mORMot2"
 >
+  <data exists="false" />
   <compiler_options>
     <search_paths>
-      <path value="code" />
+      <path value="code/" />
       <path value="../shared" />
       <!--
         Adding mORMot2 paths to the project, following the quick start guide from
