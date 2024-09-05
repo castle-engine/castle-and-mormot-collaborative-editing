@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+Specify basic information about the project, including how this project is build.
+See https://castle-engine.io/project_manifest for documentation of this file.
+-->
+
+<project name="castle_mormot_client"
+  standalone_source="castle_mormot_client_standalone.dpr"
+  game_units="GameInitialize"
+  qualified_name="io.castleengine.castle.mormot.client"
+  caption="Client - Collaborative editing using Castle Game Engine and mORMot2"
+>
+  <compiler_options>
+    <search_paths>
+      <path value="code" />
+      <path value="../shared" />
+      <!--
+        Adding mORMot2 paths to the project, following the quick start guide from
+        https://github.com/synopse/mORMot2/
+        TODO: CGE build tool could support env variables like $(Mormot2) for this.
+      -->
+      <path value="../../../sorpetaler/mORMot2/" />
+      <path value="../../../sorpetaler/mORMot2/src/core" />
+      <path value="../../../sorpetaler/mORMot2/src/lib" />
+      <path value="../../../sorpetaler/mORMot2/src/crypt" />
+      <path value="../../../sorpetaler/mORMot2/src/net" />
+      <path value="../../../sorpetaler/mORMot2/src/db" />
+      <path value="../../../sorpetaler/mORMot2/src/rest" />
+      <path value="../../../sorpetaler/mORMot2/src/orm" />
+      <path value="../../../sorpetaler/mORMot2/src/soa" />
+      <path value="../../../sorpetaler/mORMot2/src/app" />
+      <path value="../../../sorpetaler/mORMot2/src/script" />
+      <path value="../../../sorpetaler/mORMot2/src/ui" />
+      <path value="../../../sorpetaler/mORMot2/src/tools" />
+      <path value="../../../sorpetaler/mORMot2/src/misc" />
+    </search_paths>
+    <library_paths>
+      <!-- TODO: CGE build tool could support env variables -->
+      <!-- path value="$(Mormot2)/static/$(TargetCPU)-$(TargetOS)" /-->
+      <path value="../../../sorpetaler/mORMot2/static/x86_64-win64" />
+    </library_paths>
+  </compiler_options>
+</project>
