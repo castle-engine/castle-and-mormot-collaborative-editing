@@ -14,6 +14,11 @@ In effect, you have a fun application where multiple people can connect and rear
 - Design a room from furniture.
 - Arrange chess pieces on a board.
 
+## Screenshots
+
+![Screenshot 1](screenshot1.png)
+![Screenshot 2](screenshot2.png)
+
 ## ORM usage
 
 This uses ORM to synchronize the 3D world between the server and clients.
