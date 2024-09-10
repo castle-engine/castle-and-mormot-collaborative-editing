@@ -35,6 +35,7 @@ Note that the current camera and selection state is *not* saved, deliberately. C
 
 ![Screenshot 1](screenshot1.png)
 ![Screenshot 2](screenshot2.png)
+![Screenshot 3](screenshot3.png)
 
 ## ORM usage
 
