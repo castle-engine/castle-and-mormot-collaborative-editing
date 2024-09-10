@@ -19,7 +19,7 @@ interface
 uses Classes,
   CastleVectors, CastleUIControls, CastleControls, CastleKeysMouse,
   CastleCameras, CastleFindFiles, CastleTransform, CastleDebugTransform,
-  CastleViewport;
+  CastleViewport, CastleTransformManipulate;
 
 type
   { View to edit the world. }
@@ -34,17 +34,14 @@ type
     EditableAssetsParent: TCastleTransform;
     MainViewport: TCastleViewport;
   private
-    type
-      TTransformMode = (tmTranslate, tmRotate, tmScale);
-    var
-      { List of URLs of assets that can be placed in TOrmCastleTransform. }
-      EditableAssets: TStringList;
-      { All instances of TCastleTransform created from TOrmCastleTransform
-        will be owned by this component. They cannot be just owned by FreeAtStop
-        because they need a separate owner, as their names are in a separate namespace. }
-      EditableAssetsOwner: TComponent;
-      VisualizeSelected, VisualizeHover: TDebugTransformBox;
-      TransformMode: TTransformMode;
+    { List of URLs of assets that can be placed in TOrmCastleTransform. }
+    EditableAssets: TStringList;
+    { All instances of TCastleTransform created from TOrmCastleTransform
+      will be owned by this component. They cannot be just owned by FreeAtStop
+      because they need a separate owner, as their names are in a separate namespace. }
+    EditableAssetsOwner: TComponent;
+    TransformHover: TCastleTransformHover;
+    TransformManipulate: TCastleTransformManipulate;
     procedure FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
@@ -52,11 +49,12 @@ type
     procedure ClickDelete(Sender: TObject);
     procedure ClickClearAll(Sender: TObject);
     procedure NewEditableAsset(const NewUrl: String);
-    { Set Pressed state of 3 buttons based on TransformMode. }
+    { Set Pressed state of 3 buttons based on TransformManipulate.Mode. }
     procedure UpdateTransformButtons;
     procedure ClickTranslate(Sender: TObject);
     procedure ClickRotate(Sender: TObject);
     procedure ClickScale(Sender: TObject);
+    procedure TransformManipulateModified(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     procedure Start; override;
@@ -71,7 +69,7 @@ var
 implementation
 
 uses SysUtils, Contnrs, Math,
-  Mormot.Core.Unicode, Mormot.Core.Os,
+  Mormot.Core.Base, Mormot.Core.Unicode, Mormot.Core.Os, Mormot.Orm.Core,
   CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
   SharedData, GameConnection, CastleUtils;
 
@@ -129,20 +127,20 @@ begin
   end;
   FreeAndNil(AllOrmTransforms);
 
-  { Tracking hover and selected objects.
-    The TDebugTransformBox instances visualize the currently hovered over / selected
-    TCastleTransform.
-    They also automatically handle "what happens when Parent is freed".
-    So we just use VisualizeHover.Parent and VisualizeSelected.Parent to track it. }
-  VisualizeHover := TDebugTransformBox.Create(FreeAtStop);
-  VisualizeHover.BoxColor := ColorOpacity(HexToColor('fffba0'), 0.25);
-  VisualizeHover.Exists := true;
+  { Tracking hover and manipulated objects.
+    The TCastleTransformHover and TCastleTransformManipulate instancess
+    visualize the currently hovered over / manipulated TCastleTransform.
+    They also automatically handle "what happens when the object is freed",
+    setting their respective references to nil.
+    So we just use
+    - TransformHover.Current and
+    - TransformManipulate.MainSelected
+    to track what is now hovered over / manipulated. }
+  TransformHover := TCastleTransformHover.Create(FreeAtStop);
+  TransformManipulate := TCastleTransformManipulate.Create(FreeAtStop);
+  TransformManipulate.Mode := mmTranslate;
+  TransformManipulate.OnTransformModified := {$ifdef FPC}@{$endif} TransformManipulateModified;
 
-  VisualizeSelected := TDebugTransformBox.Create(FreeAtStop);
-  VisualizeSelected.BoxColor := ColorOpacity(White, 0.25);
-  VisualizeSelected.Exists := true;
-
-  TransformMode := tmTranslate;
   UpdateTransformButtons;
 end;
 
@@ -152,64 +150,58 @@ begin
   inherited;
 end;
 
+procedure TViewedit.TransformManipulateModified(Sender: TObject);
+var
+  Sel: TCastleTransform;
+begin
+  { TODO: This code to update feels a bit dirty -- calling UpdateField
+    3 or 4 times is probably not optimal, and in general it feels not cool
+    that we cannot use
+
+      HttpClient.Orm.Update(TOrm)
+
+    However, we don't have TOrmCastleTransform instance at this point.
+    We could make it... but it would not have correct ID, as TOrm.ID is read-only,
+    we cannot just set it from Sel.Tag.
+    In general, all HttpClient.Orm.Update* feel a bit unsuitable for this case.
+
+    There are no practical problems with this though, so maybe just accept
+    it as the way to do it. }
+
+  Sel := TransformManipulate.MainSelected;
+  case TransformManipulate.Mode of
+    mmTranslate:
+      begin
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationX', Sel.Translation.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationY', Sel.Translation.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationZ', Sel.Translation.Z) then
+          raise Exception.Create('Failed to update the server');
+      end;
+    mmRotate:
+      begin
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationX', Sel.Rotation.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationY', Sel.Rotation.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationZ', Sel.Rotation.Z) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationW', Sel.Rotation.W) then
+          raise Exception.Create('Failed to update the server');
+      end;
+    mmScale:
+      begin
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleX', Sel.Scale.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleY', Sel.Scale.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleZ', Sel.Scale.Z) then
+          raise Exception.Create('Failed to update the server');
+      end;
+    else raise EInternalError.Create('TransformMode?');
+  end;
+end;
+
 procedure TViewedit.Update(const SecondsPassed: Single; var HandleInput: boolean);
 
   { Component-wise maximum of two vectors. }
   function MaxVector(const A, B: TVector3): TVector3;
   begin
     Result := Vector3(Max(A.X, B.X), Max(A.Y, B.Y), Max(A.Z, B.Z));
-  end;
-
-  { Perform transformation (given by TransformMode) on a selected object
-    (given by VisualizeSelected.Parent) by Delta * SecondsPassed. }
-  procedure Transform(const Delta: TVector2);
-  var
-    Sel: TCastleTransform; //< selected transform
-  begin
-    Sel := VisualizeSelected.Parent;
-
-    { TODO: This code to update feels a bit dirty -- calling UpdateField
-      3 or 4 times is probably not optimal, and in general it feels not cool
-      that we cannot use
-
-        HttpClient.Orm.Update(TOrm)
-
-      However, we don't have TOrmCastleTransform instance at this point.
-      We could make it... but it would not have correct ID, as TOrm.ID is read-only,
-      we cannot just set it from Sel.Tag.
-      In general, all HttpClient.Orm.Update* feel a bit unsuitable for this case.
-
-      There are no practical problems with this though, so maybe just accept
-      it as the way to do it. }
-
-    case TransformMode of
-      tmTranslate:
-        begin
-          Sel.Translation := Sel.Translation + SecondsPassed * 10 * Vector3(Delta.X, 0, Delta.Y);
-          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationX', Sel.Translation.X) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationY', Sel.Translation.Y) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationZ', Sel.Translation.Z) then
-            raise Exception.Create('Failed to update the server');
-        end;
-      tmRotate:
-        begin
-          Sel.Rotation := Vector4(0, 1, 0, Sel.Rotation.W + Delta.X * SecondsPassed);
-          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationX', Sel.Rotation.X) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationY', Sel.Rotation.Y) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationZ', Sel.Rotation.Z) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationW', Sel.Rotation.W) then
-            raise Exception.Create('Failed to update the server');
-        end;
-      tmScale:
-        begin
-          Sel.Scale := MaxVector(Vector3(0.1, 0.1, 0.1), Sel.Scale + SecondsPassed * Vector3(Delta.X, 0, Delta.Y));
-          if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleX', Sel.Scale.X) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleY', Sel.Scale.Y) or
-             not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleZ', Sel.Scale.Z) then
-            raise Exception.Create('Failed to update the server');
-        end;
-      else raise EInternalError.Create('TransformMode?');
-    end;
   end;
 
 begin
@@ -227,21 +219,9 @@ begin
     { We use TransformUnderMouse.Parent, because this TCastleTransform
       corresponds to TOrmCastleTransform, and has Tag equal ORM ID,
       which is critical to synchronize operations with the server. }
-    VisualizeHover.Parent := MainViewport.TransformUnderMouse.Parent
+    TransformHover.Current := MainViewport.TransformUnderMouse.Parent
   else
-    VisualizeHover.Parent := nil;
-
-  if VisualizeSelected.Parent <> nil then
-  begin
-    if Container.Pressed[keyArrowLeft] then
-      Transform(Vector2(-1, 0));
-    if Container.Pressed[keyArrowRight] then
-      Transform(Vector2(1, 0));
-    if Container.Pressed[keyArrowUp] then
-      Transform(Vector2(0, -1));
-    if Container.Pressed[keyArrowDown] then
-      Transform(Vector2(0, 1));
-  end;
+    TransformHover.Current := nil;
 end;
 
 function TViewedit.Press(const Event: TInputPressRelease): Boolean;
@@ -249,9 +229,13 @@ begin
   Result := inherited;
   if Result then Exit;
 
-  if Event.IsMouseButton(buttonLeft) and (VisualizeHover.Parent <> nil) then
+  if Event.IsMouseButton(buttonLeft) and (TransformHover.Current <> nil) then
   begin
-    VisualizeSelected.Parent := VisualizeHover.Parent;
+    { We set selected in 2 ways on TransformManipulate.
+      In the future, when we implement editing transformation of multiple objects
+      at once, MainSelected will be removed (or will become an alias to SetSelected). }
+    TransformManipulate.MainSelected := TransformHover.Current;
+    TransformManipulate.SetSelected([TransformHover.Current]);
     Exit(true);
   end;
 end;
@@ -336,15 +320,18 @@ begin
 end;
 
 procedure TViewedit.ClickDelete(Sender: TObject);
+var
+  Sel: TCastleTransform;
 begin
-  if VisualizeSelected.Parent <> nil then
+  if TransformManipulate.MainSelected <> nil then
   begin
     { Remove from the server.
       We know that TCastleTransform.Tag holds the ID of the TOrmCastleTransform. }
-    WriteLnLog('Deleting from server: %d', [VisualizeSelected.Parent.Tag]);
-    if not HttpClient.Orm.Delete(TOrmCastleTransform, VisualizeSelected.Parent.Tag) then
+    Sel := TransformManipulate.MainSelected;
+    WriteLnLog('Deleting from server: %d', [Sel.Tag]);
+    if not HttpClient.Orm.Delete(TOrmCastleTransform, Sel.Tag) then
       raise Exception.Create('Failed to delete from the server');
-    VisualizeSelected.Parent.Free; // this also clears VisualizeSelected.Parent
+    Sel.Free; // this also clears TransformManipulate.MainSelected
   end;
 end;
 
@@ -360,26 +347,26 @@ end;
 
 procedure TViewedit.UpdateTransformButtons;
 begin
-  ButtonTranslate.Pressed := TransformMode = tmTranslate;
-  ButtonRotate.Pressed := TransformMode = tmRotate;
-  ButtonScale.Pressed := TransformMode = tmScale;
+  ButtonTranslate.Pressed := TransformManipulate.Mode = mmTranslate;
+  ButtonRotate.Pressed := TransformManipulate.Mode = mmRotate;
+  ButtonScale.Pressed := TransformManipulate.Mode = mmScale;
 end;
 
 procedure TViewedit.ClickTranslate(Sender: TObject);
 begin
-  TransformMode := tmTranslate;
+  TransformManipulate.Mode := mmTranslate;
   UpdateTransformButtons;
 end;
 
 procedure TViewedit.ClickRotate(Sender: TObject);
 begin
-  TransformMode := tmRotate;
+  TransformManipulate.Mode := mmRotate;
   UpdateTransformButtons;
 end;
 
 procedure TViewedit.ClickScale(Sender: TObject);
 begin
-  TransformMode := tmScale;
+  TransformManipulate.Mode := mmScale;
   UpdateTransformButtons;
 end;
 
