@@ -71,7 +71,7 @@ end;
 
 procedure TViewMenu.ClickConnect(Sender: TObject);
 begin
-  HttpClient := TRestHttpClient.Create(EditHost.Text, Model,
+  HttpClient := TRestHttpClient.Create(StringToUtf8(EditHost.Text), Model,
     EditPort.Value);
   Container.View := ViewEdit;
 end;

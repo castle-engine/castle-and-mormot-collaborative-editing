@@ -71,7 +71,7 @@ var
 implementation
 
 uses SysUtils, Contnrs, Math,
-  Mormot.Core.Unicode,
+  Mormot.Core.Unicode, Mormot.Core.Os,
   CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
   SharedData, GameConnection, CastleUtils;
 

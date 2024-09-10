@@ -17,7 +17,7 @@ unit SharedData;
 interface
 
 uses Classes,
-  Mormot.Core.Base, Mormot.Orm.Base, Mormot.Orm.Core,
+  Mormot.Core.Base, Mormot.Orm.Base, Mormot.Orm.Core, Mormot.Core.Os,
   CastleTransform;
 
 type
@@ -126,30 +126,32 @@ var
   Scene: TCastleScene;
   Sphere: TCastleSphere;
   Box: TCastleBox;
+  UrlString: String;
 begin
   {$ifdef CPU32}
     {$message warn 'TODO: This code is not safe on 32-bit platforms, as it assumes Tag can hold 64-bit ID.'}
   {$endif}
   Instance.Tag := ID;
-  Instance.Name := FName;
+  Instance.Name := Utf8ToString(FName);
   Instance.Translation := Vector3(FTranslationX, FTranslationY, FTranslationZ);
   Instance.Rotation := Vector4(FRotationX, FRotationY, FRotationZ, FRotationW);
   Instance.Scale := Vector3(FScaleX, FScaleY, FScaleZ);
-  if FUrl = 'castle-primitive:/sphere' then
+  UrlString := Utf8ToString(FUrl);
+  if UrlString = 'castle-primitive:/sphere' then
   begin
     Sphere := MakeChildClass(TCastleSphere) as TCastleSphere;
     Sphere.PreciseCollisions := true;
   end else
-  if FUrl = 'castle-primitive:/box' then
+  if UrlString = 'castle-primitive:/box' then
   begin
     Box := MakeChildClass(TCastleBox) as TCastleBox;
     Box.PreciseCollisions := true;
   end else
-  if UriProtocol(FUrl) = 'castle-data' then
+  if UriProtocol(UrlString) = 'castle-data' then
   begin
     Scene := MakeChildClass(TCastleScene) as TCastleScene;
     Scene.PreciseCollisions := true;
-    Scene.Url := FUrl;
+    Scene.Url := UrlString;
     // just to look nice, play the first animation
     if Scene.AnimationsList.Count > 0 then
       Scene.PlayAnimation(Scene.AnimationsList[0], true);
@@ -157,7 +159,7 @@ begin
   begin
     ClearChildren;
     WritelnWarning('Invalid URL for TOrmCastleTransform, ignoring: %s', [
-      UriDisplay(FUrl)
+      UriDisplay(UrlString)
     ]);
   end;
 end;
