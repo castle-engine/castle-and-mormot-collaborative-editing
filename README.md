@@ -14,6 +14,23 @@ In effect, you have a fun application where multiple people can connect and rear
 - Design a room from furniture.
 - Arrange chess pieces on a board.
 
+## Features
+
+You can:
+
+- Add boxes, spheres, and random glTF assets from the client data.
+- Duplicate objects.
+- Remove objects.
+- Select, move, rotate, scale the 3D objects (using new `CastleTransformManipulate` unit).
+- Navigate in the world (use AWSD to move, hold right mouse button to look around).
+
+The state of the 3D world is _persistent_. That is, all the operations on 3D objects (add, remove, transforming) are saved automatically. You can close the client application at any time, open it again, and the world will be in the same state as you left it. Technically:
+
+- The client sends all the changes to the server.
+- The server in turn persists the state of the 3D world to a database (Sqlite).
+
+Note that the current camera and selection state is *not* saved, deliberately. Conceptually, they are not part of the _"3D world state"_. Also, we wanted to keep this example code simple :) But saving them could be easily addded, as additional ORM classes.
+
 ## Screenshots
 
 ![Screenshot 1](screenshot1.png)
@@ -76,8 +93,6 @@ Compile by:
 
 - For collaborative editing, actually watch for changes from others done to the world. This is not implemented yet, we only synchronize from server at Start.
 - Allow choosing specific asset to add (TCastleComboBox), not random.
-- UI tiny improvement: both hover + selected handle specially.
-- Show nice gizmo to move/rotate/scale objects, just like editor.
 
 ## Authors and license
 
