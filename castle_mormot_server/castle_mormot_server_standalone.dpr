@@ -25,6 +25,7 @@ uses
   mormot.core.base,
   mormot.core.os,
   mormot.core.log,
+  Mormot.Core.Rtti,
   mormot.db.raw.sqlite3,
   mormot.db.raw.sqlite3.static,
   mormot.orm.core,
