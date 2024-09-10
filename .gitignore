@@ -1,0 +1,6 @@
+# Delphi temp
+__history
+*.res
+*.rsm
+*.local
+*.identcache

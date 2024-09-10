@@ -12,6 +12,7 @@ castle-engine-output
 /castle_mormot_server
 # Windows executable
 /castle_mormot_server.exe
+/castle_mormot_server_standalone.exe
 # Library files placed alongside Windows executable
 *.dll
 # Auto-updated by CGE tools when compiling Windows build
