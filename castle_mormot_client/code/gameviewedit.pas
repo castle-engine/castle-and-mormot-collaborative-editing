@@ -19,7 +19,8 @@ interface
 uses Classes,
   CastleVectors, CastleUIControls, CastleControls, CastleKeysMouse,
   CastleCameras, CastleFindFiles, CastleTransform, CastleDebugTransform,
-  CastleViewport, CastleTransformManipulate;
+  CastleViewport, CastleTransformManipulate,
+  SharedData;
 
 type
   { View to edit the world. }
@@ -29,7 +30,8 @@ type
       These fields will be automatically initialized at Start. }
     LabelFps: TCastleLabel;
     FlyNavigation: TCastleWalkNavigation;
-    ButtonAddRandom, ButtonAddSphere, ButtonAddBox, ButtonDelete, ButtonClearAll: TCastleButton;
+    ButtonAddRandom, ButtonAddSphere, ButtonAddBox, ButtonDuplicate,
+      ButtonDelete, ButtonClearAll: TCastleButton;
     ButtonTranslate, ButtonRotate, ButtonScale: TCastleButton;
     EditableAssetsParent: TCastleTransform;
     MainViewport: TCastleViewport;
@@ -46,11 +48,27 @@ type
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
     procedure ClickAddBox(Sender: TObject);
+    procedure ClickDuplicate(Sender: TObject);
     procedure ClickDelete(Sender: TObject);
     procedure ClickClearAll(Sender: TObject);
-    procedure NewEditableAsset(const NewUrl: String);
+
+    { Create new TOrmCastleTransform instance initialized with mostly random values.
+      The URL will be NewUrl.
+      Name is unset. }
+    function NewOrmCastleTransform(const NewUrl: String): TOrmCastleTransform;
+
+    { Initialize given OrmTransform to appear in the world (client and server)
+      correctly:
+      @orderedList(
+        @item(Initialize OrmTransform.Name to be something non-conflicting.)
+        @item(Send to the server.)
+        @item(Add to MainViewport (by adding to EditableAssetsParent).)
+      ) }
+    procedure NewEditableAsset(const OrmTransform: TOrmCastleTransform);
+
     { Set Pressed state of 3 buttons based on TransformManipulate.Mode. }
     procedure UpdateTransformButtons;
+
     procedure ClickTranslate(Sender: TObject);
     procedure ClickRotate(Sender: TObject);
     procedure ClickScale(Sender: TObject);
@@ -71,7 +89,7 @@ implementation
 uses SysUtils, Contnrs, Math,
   Mormot.Core.Base, Mormot.Core.Unicode, Mormot.Core.Os, Mormot.Orm.Core,
   CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
-  SharedData, GameConnection, CastleUtils;
+  GameConnection, CastleUtils;
 
 constructor TViewedit.Create(AOwner: TComponent);
 begin
@@ -92,6 +110,7 @@ begin
   ButtonAddRandom.OnClick := {$ifdef FPC}@{$endif} ClickAddRandom;
   ButtonAddSphere.OnClick := {$ifdef FPC}@{$endif} ClickAddSphere;
   ButtonAddBox.OnClick := {$ifdef FPC}@{$endif} ClickAddBox;
+  ButtonDuplicate.OnClick := {$ifdef FPC}@{$endif} ClickDuplicate;
   ButtonDelete.OnClick := {$ifdef FPC}@{$endif} ClickDelete;
   ButtonClearAll.OnClick := {$ifdef FPC}@{$endif} ClickClearAll;
   ButtonTranslate.OnClick := {$ifdef FPC}@{$endif} ClickTranslate;
@@ -254,7 +273,22 @@ begin
   //WritelnLog('Found editable asset: ' + Url);
 end;
 
-procedure TViewedit.NewEditableAsset(const NewUrl: String);
+function TViewedit.NewOrmCastleTransform(const NewUrl: String): TOrmCastleTransform;
+begin
+  Result := TOrmCastleTransform.Create;
+
+  Result.Url := StringToUTF8(NewUrl);
+  Result.TranslationX := Random * 10;
+  //Result.TranslationY := Random * 10; // don't randomize, keep on floor
+  Result.TranslationZ := Random * 10;
+
+  // normal uniform scale
+  Result.ScaleX := 1;
+  Result.ScaleY := 1;
+  Result.ScaleZ := 1;
+end;
+
+procedure TViewedit.NewEditableAsset(const OrmTransform: TOrmCastleTransform);
 
   function MakeValidPascalIdent(const S: String): String;
   begin
@@ -270,64 +304,91 @@ procedure TViewedit.NewEditableAsset(const NewUrl: String);
   end;
 
 var
-  OrmTransform: TOrmCastleTransform;
   BaseName: String;
   Transform: TCastleTransform;
 begin
-  OrmTransform := TOrmCastleTransform.Create;
-  try
-    OrmTransform.Url := StringToUTF8(NewUrl);
-    OrmTransform.TranslationX := Random * 10;
-    //OrmTransform.TranslationY := Random * 10; // don't randomize, keep on floor
-    OrmTransform.TranslationZ := Random * 10;
-    // normal uniform scale
-    OrmTransform.ScaleX := 1;
-    OrmTransform.ScaleY := 1;
-    OrmTransform.ScaleZ := 1;
+  BaseName := DeleteUriExt(ExtractUriName(Utf8ToString(OrmTransform.Url)));
+  BaseName := MakeValidPascalIdent(BaseName);
+  BaseName := ProposeComponentName(TCastleTransform, EditableAssetsOwner, BaseName);
+  OrmTransform.Name := StringToUTF8(BaseName);
 
-    BaseName := DeleteUriExt(ExtractUriName(NewUrl));
-    BaseName := MakeValidPascalIdent(BaseName);
-    BaseName := ProposeComponentName(TCastleTransform, EditableAssetsOwner, BaseName);
-    OrmTransform.Name := StringToUTF8(BaseName);
+  if HttpClient.Orm.Add(OrmTransform, true) = 0 then
+    raise Exception.Create('Failed to add new asset to the server');
+  WritelnLog('Added random asset (name: %s, url: %s, ORM id: %d)', [
+    OrmTransform.Name,
+    OrmTransform.Url,
+    OrmTransform.ID // this was updated by HttpClient.Orm.Add above
+  ]);
 
-    if HttpClient.Orm.Add(OrmTransform, true) = 0 then
-      raise Exception.Create('Failed to add new asset to the server');
+  Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
+  EditableAssetsParent.Add(Transform);
 
-    WritelnLog('Added random asset (name: %s, url: %s, ORM id: %d)', [
-      OrmTransform.Name,
-      OrmTransform.Url,
-      OrmTransform.ID // this was updated by HttpClient.Orm.Add above
-    ]);
-
-    Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
-    EditableAssetsParent.Add(Transform);
-  finally FreeAndNil(OrmTransform) end;
+  // make newly added object selected; makes the UI nice, to further transform or duplicate
+  TransformManipulate.MainSelected := Transform;
+  TransformManipulate.SetSelected([Transform]);
 end;
 
 procedure TViewedit.ClickAddRandom(Sender: TObject);
+var
+  Orm: TOrmCastleTransform;
 begin
-  NewEditableAsset(EditableAssets[Random(EditableAssets.Count)]);
+  Orm := NewOrmCastleTransform(EditableAssets[Random(EditableAssets.Count)]);
+  try
+    NewEditableAsset(Orm);
+  finally FreeAndNil(Orm) end;
 end;
 
 procedure TViewedit.ClickAddSphere(Sender: TObject);
+var
+  Orm: TOrmCastleTransform;
 begin
-  NewEditableAsset('castle-primitive:/sphere');
+  Orm := NewOrmCastleTransform('castle-primitive:/sphere');
+  try
+    NewEditableAsset(Orm);
+  finally FreeAndNil(Orm) end;
 end;
 
 procedure TViewedit.ClickAddBox(Sender: TObject);
+var
+  Orm: TOrmCastleTransform;
 begin
-  NewEditableAsset('castle-primitive:/box');
+  Orm := NewOrmCastleTransform('castle-primitive:/box');
+  try
+    NewEditableAsset(Orm);
+  finally FreeAndNil(Orm) end;
+end;
+
+procedure TViewedit.ClickDuplicate(Sender: TObject);
+var
+  Sel: TCastleTransform;
+  Orm: TOrmCastleTransform;
+begin
+  Sel := TransformManipulate.MainSelected;
+  if Sel <> nil then
+  begin
+    Orm := TOrmCastleTransform.Create;
+    try
+      Orm.UpdateFromTransform(Sel);
+      { Apply tiny translation in XZ to let user see that it's duplicated.
+        Note: This is probably a bad idea to do in non-demo application,
+        because user may want to preserve original X / Z exactly.
+        Displaying the selected name would probably be better. }
+      Orm.TranslationX := Orm.TranslationX + 0.1;
+      Orm.TranslationZ := Orm.TranslationZ + 0.1;
+      NewEditableAsset(Orm);
+    finally FreeAndNil(Orm) end;
+  end;
 end;
 
 procedure TViewedit.ClickDelete(Sender: TObject);
 var
   Sel: TCastleTransform;
 begin
-  if TransformManipulate.MainSelected <> nil then
+  Sel := TransformManipulate.MainSelected;
+  if Sel <> nil then
   begin
     { Remove from the server.
       We know that TCastleTransform.Tag holds the ID of the TOrmCastleTransform. }
-    Sel := TransformManipulate.MainSelected;
     WriteLnLog('Deleting from server: %d', [Sel.Tag]);
     if not HttpClient.Orm.Delete(TOrmCastleTransform, Sel.Tag) then
       raise Exception.Create('Failed to delete from the server');

@@ -63,7 +63,12 @@ type
     function CreateTransform(const Owner: TComponent): TCastleTransform;
 
     { Update an existing TCastleTransform instance to reflect state of this ORM. }
-    procedure UpdateTransform(const Instance: TCastleTransform);
+    procedure UpdateToTransform(const Instance: TCastleTransform);
+
+    { Set the state of this ORM to reflect the state of the given TCastleTransform.
+      This is the reverse of UpdateToTransform.
+      Note that it doesn't synchronize ID, as ID is not supposed to be changed this way. }
+    procedure UpdateFromTransform(const Instance: TCastleTransform);
   published
     { Unique name that identifies the object.
       Will be used for TComponent.Name of CGE components. }
@@ -87,7 +92,8 @@ function CreateOrmModel: TOrmModel;
 implementation
 
 uses SysUtils,
-  CastleUriUtils, CastleScene, CastleVectors, CastleLog;
+  Mormot.Core.Unicode,
+  CastleUriUtils, CastleScene, CastleVectors, CastleLog, CastleUtils;
 
 function CreateOrmModel: TOrmModel;
 begin
@@ -99,10 +105,10 @@ end;
 function TOrmCastleTransform.CreateTransform(const Owner: TComponent): TCastleTransform;
 begin
   Result := TCastleTransform.Create(Owner);
-  UpdateTransform(Result);
+  UpdateToTransform(Result);
 end;
 
-procedure TOrmCastleTransform.UpdateTransform(const Instance: TCastleTransform);
+procedure TOrmCastleTransform.UpdateToTransform(const Instance: TCastleTransform);
 
   procedure ClearChildren;
   begin
@@ -161,6 +167,42 @@ begin
     WritelnWarning('Invalid URL for TOrmCastleTransform, ignoring: %s', [
       UriDisplay(UrlString)
     ]);
+  end;
+end;
+
+procedure TOrmCastleTransform.UpdateFromTransform(const Instance: TCastleTransform);
+var
+  Child: TCastleTransform;
+begin
+  // ID := Instance.Tag; // cannot synchronize ID this way
+  FName := StringToUTF8(Instance.Name);
+  FTranslationX := Instance.Translation.X;
+  FTranslationY := Instance.Translation.Y;
+  FTranslationZ := Instance.Translation.Z;
+  FRotationX := Instance.Rotation.X;
+  FRotationY := Instance.Rotation.Y;
+  FRotationZ := Instance.Rotation.Z;
+  FRotationW := Instance.Rotation.W;
+  FScaleX := Instance.Scale.X;
+  FScaleY := Instance.Scale.Y;
+  FScaleZ := Instance.Scale.Z;
+  if Instance.Count > 0 then
+  begin
+    Child := Instance[0];
+    if Child is TCastleScene then
+      FUrl := StringToUTF8(TCastleScene(Child).Url)
+    else
+    if Child is TCastleSphere then
+      FUrl := 'castle-primitive:/sphere'
+    else
+    if Child is TCastleBox then
+      FUrl := 'castle-primitive:/box'
+    else
+      raise EInternalError.Create('Unexpected child class of TCastleTransform');
+  end else
+  begin
+    WritelnWarning('No child of TCastleTransform, setting empty URL -- this is not a valid state');
+    FUrl := '';
   end;
 end;
 

@@ -942,6 +942,143 @@
           "BorderColorPersistent" : {
             "$$ClassName" : "TCastleColorPersistent"
           },
+          "Caption" : "Duplicate",
+          "CustomBackgroundDisabled" : {
+            "$$ClassName" : "TCastleImagePersistent",
+            "ClipLinePersistent" : {
+              "$$ClassName" : "TCastleVector3Persistent"
+            },
+            "ColorPersistent" : {
+              "$$ClassName" : "TCastleColorPersistent"
+            },
+            "ProtectedSides" : {
+              "$$ClassName" : "TBorder"
+            },
+            "RegionPersistent" : {
+              "$$ClassName" : "TFloatRectanglePersistent"
+            },
+            "RotationCenterPersistent" : {
+              "$$ClassName" : "TCastleVector2Persistent"
+            }
+          },
+          "CustomBackgroundFocused" : {
+            "$$ClassName" : "TCastleImagePersistent",
+            "ClipLinePersistent" : {
+              "$$ClassName" : "TCastleVector3Persistent"
+            },
+            "ColorPersistent" : {
+              "$$ClassName" : "TCastleColorPersistent"
+            },
+            "ProtectedSides" : {
+              "$$ClassName" : "TBorder"
+            },
+            "RegionPersistent" : {
+              "$$ClassName" : "TFloatRectanglePersistent"
+            },
+            "RotationCenterPersistent" : {
+              "$$ClassName" : "TCastleVector2Persistent"
+            }
+          },
+          "CustomBackgroundNormal" : {
+            "$$ClassName" : "TCastleImagePersistent",
+            "ClipLinePersistent" : {
+              "$$ClassName" : "TCastleVector3Persistent"
+            },
+            "ColorPersistent" : {
+              "$$ClassName" : "TCastleColorPersistent"
+            },
+            "ProtectedSides" : {
+              "$$ClassName" : "TBorder"
+            },
+            "RegionPersistent" : {
+              "$$ClassName" : "TFloatRectanglePersistent"
+            },
+            "RotationCenterPersistent" : {
+              "$$ClassName" : "TCastleVector2Persistent"
+            }
+          },
+          "CustomBackgroundPressed" : {
+            "$$ClassName" : "TCastleImagePersistent",
+            "ClipLinePersistent" : {
+              "$$ClassName" : "TCastleVector3Persistent"
+            },
+            "ColorPersistent" : {
+              "$$ClassName" : "TCastleColorPersistent"
+            },
+            "ProtectedSides" : {
+              "$$ClassName" : "TBorder"
+            },
+            "RegionPersistent" : {
+              "$$ClassName" : "TFloatRectanglePersistent"
+            },
+            "RotationCenterPersistent" : {
+              "$$ClassName" : "TCastleVector2Persistent"
+            }
+          },
+          "CustomColorDisabledPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "CustomColorFocusedPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "CustomColorNormalPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "CustomColorPressedPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "CustomTextColorPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "Image" : {
+            "$$ClassName" : "TCastleImagePersistent",
+            "ClipLinePersistent" : {
+              "$$ClassName" : "TCastleVector3Persistent"
+            },
+            "ColorPersistent" : {
+              "$$ClassName" : "TCastleColorPersistent"
+            },
+            "ProtectedSides" : {
+              "$$ClassName" : "TBorder"
+            },
+            "RegionPersistent" : {
+              "$$ClassName" : "TFloatRectanglePersistent"
+            },
+            "RotationCenterPersistent" : {
+              "$$ClassName" : "TCastleVector2Persistent"
+            }
+          },
+          "Name" : "ButtonDuplicate",
+          "OutlineColorPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "TintDisabledPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "TintFocusedPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "TintNormalPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "TintPressedPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
+          "TranslationPersistent" : {
+            "$$ClassName" : "TCastleVector2Persistent",
+            "Y" : -1.4700000000000000E+002
+          },
+          "VerticalAnchorParent" : "vpTop",
+          "VerticalAnchorSelf" : "vpTop"
+        },
+        {
+          "$$ClassName" : "TCastleButton",
+          "Border" : {
+            "$$ClassName" : "TBorder"
+          },
+          "BorderColorPersistent" : {
+            "$$ClassName" : "TCastleColorPersistent"
+          },
           "Caption" : "Delete (Selected)",
           "CustomBackgroundDisabled" : {
             "$$ClassName" : "TCastleImagePersistent",
@@ -1066,7 +1203,7 @@
           },
           "TranslationPersistent" : {
             "$$ClassName" : "TCastleVector2Persistent",
-            "Y" : -1.4700000000000000E+002
+            "Y" : -1.9600000000000000E+002
           },
           "VerticalAnchorParent" : "vpTop",
           "VerticalAnchorSelf" : "vpTop"
@@ -1203,7 +1340,7 @@
           },
           "TranslationPersistent" : {
             "$$ClassName" : "TCastleVector2Persistent",
-            "Y" : -1.9600000000000000E+002
+            "Y" : -2.4500000000000000E+002
           },
           "VerticalAnchorParent" : "vpTop",
           "VerticalAnchorSelf" : "vpTop"
@@ -1256,7 +1393,7 @@
             "$$ClassName" : "TCastleColorPersistent"
           },
           "Text" : [
-            "Mode (use arrow keys):"
+            "Manipulation Mode:"
           ],
           "TranslationPersistent" : {
             "$$ClassName" : "TCastleVector2Persistent"
