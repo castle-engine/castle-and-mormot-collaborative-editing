@@ -73,6 +73,9 @@ type
     procedure ClickRotate(Sender: TObject);
     procedure ClickScale(Sender: TObject);
     procedure TransformManipulateModified(Sender: TObject);
+
+    { One selected TCastleTransform. }
+    function SelectedTransform: TCastleTransform;
   public
     constructor Create(AOwner: TComponent); override;
     procedure Start; override;
@@ -153,7 +156,7 @@ begin
     setting their respective references to nil.
     So we just use
     - TransformHover.Current and
-    - TransformManipulate.MainSelected
+    - TransformManipulate.Selected
     to track what is now hovered over / manipulated. }
   TransformHover := TCastleTransformHover.Create(FreeAtStop);
   TransformManipulate := TCastleTransformManipulate.Create(FreeAtStop);
@@ -187,7 +190,7 @@ begin
     There are no practical problems with this though, so maybe just accept
     it as the way to do it. }
 
-  Sel := TransformManipulate.MainSelected;
+  Sel := SelectedTransform;
   case TransformManipulate.Mode of
     mmTranslate:
       begin
@@ -250,10 +253,6 @@ begin
 
   if Event.IsMouseButton(buttonLeft) and (TransformHover.Current <> nil) then
   begin
-    { We set selected in 2 ways on TransformManipulate.
-      In the future, when we implement editing transformation of multiple objects
-      at once, MainSelected will be removed (or will become an alias to SetSelected). }
-    TransformManipulate.MainSelected := TransformHover.Current;
     TransformManipulate.SetSelected([TransformHover.Current]);
     Exit(true);
   end;
@@ -324,7 +323,6 @@ begin
   EditableAssetsParent.Add(Transform);
 
   // make newly added object selected; makes the UI nice, to further transform or duplicate
-  TransformManipulate.MainSelected := Transform;
   TransformManipulate.SetSelected([Transform]);
 end;
 
@@ -363,7 +361,7 @@ var
   Sel: TCastleTransform;
   Orm: TOrmCastleTransform;
 begin
-  Sel := TransformManipulate.MainSelected;
+  Sel := SelectedTransform;
   if Sel <> nil then
   begin
     Orm := TOrmCastleTransform.Create;
@@ -384,7 +382,7 @@ procedure TViewedit.ClickDelete(Sender: TObject);
 var
   Sel: TCastleTransform;
 begin
-  Sel := TransformManipulate.MainSelected;
+  Sel := SelectedTransform;
   if Sel <> nil then
   begin
     { Remove from the server.
@@ -392,7 +390,7 @@ begin
     WriteLnLog('Deleting from server: %d', [Sel.Tag]);
     if not HttpClient.Orm.Delete(TOrmCastleTransform, Sel.Tag) then
       raise Exception.Create('Failed to delete from the server');
-    Sel.Free; // this also clears TransformManipulate.MainSelected
+    Sel.Free; // this also clears SelectedTransform
   end;
 end;
 
@@ -429,6 +427,16 @@ procedure TViewedit.ClickScale(Sender: TObject);
 begin
   TransformManipulate.Mode := mmScale;
   UpdateTransformButtons;
+end;
+
+function TViewedit.SelectedTransform: TCastleTransform;
+begin
+  { TransformManipulate supports multiple transforms being selected at once,
+    but we only allow one selected at a time in this demo. }
+  if TransformManipulate.SelectedCount = 1 then
+    Result := TransformManipulate.Selected[0]
+  else
+    Result := nil;
 end;
 
 end.
