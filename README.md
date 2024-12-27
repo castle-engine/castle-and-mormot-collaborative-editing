@@ -21,7 +21,7 @@ You can:
 - Add boxes, spheres, and random glTF assets from the client data.
 - Duplicate objects.
 - Remove objects.
-- Select, move, rotate, scale the 3D objects (using new `CastleTransformManipulate` unit).
+- Select, move, rotate, scale the 3D objects (using [CastleTransformManipulate](https://castle-engine.io/apidoc/html/CastleTransformManipulate.html) unit).
 - Navigate in the world (use AWSD to move, hold right mouse button to look around).
 
 The state of the 3D world is _persistent_. That is, all the operations on 3D objects (add, remove, transforming) are saved automatically. You can close the client application at any time, open it again, and the world will be in the same state as you left it. Technically:
@@ -57,7 +57,9 @@ The _mORMot_ usage in this demo follows a simple example [ex/ThirdPartyDemos/mar
 
 ## Building
 
-Get [mORMot 2](https://github.com/synopse/mORMot2/). Follow the quick-start guide there. In short:
+### Setup mORMot 2
+
+Get [mORMot 2](https://github.com/synopse/mORMot2/). Follow the [Quick Start guide of mORMot](https://github.com/synopse/mORMot2/?tab=readme-ov-file#quick-start). In short:
 
 ```
 git clone https://github.com/synopse/mORMot2/
@@ -69,22 +71,36 @@ lazbuild packages/lazarus/mormot2.lpk
 lazbuild packages/lazarus/mormot2ui.lpk
 ```
 
-If you want to build using [CGE editor](https://castle-engine.io/editor) or [CGE command-line build tool](https://castle-engine.io/build_tool), then edit these files:
+### Make CGE projects in this repo refer to mORMot
 
-- `castle_mormot_client/CastleEngineManifest.xml`
-- `castle_mormot_server/CastleEngineManifest.xml`
+If you want to build using [CGE editor](https://castle-engine.io/editor) or [CGE command-line build tool](https://castle-engine.io/build_tool), then edit these 2 files:
 
-to 1. indicate the proper (absolute or relative) directory where mORMot2 is located, 2. indicate the proper path to static files, if you compile for something else than `win64`.
+- [castle_mormot_client/CastleEngineManifest.xml](castle_mormot_client/CastleEngineManifest.xml)
+- [castle_mormot_server/CastleEngineManifest.xml](castle_mormot_server/CastleEngineManifest.xml)
+
+In each of them, you want to fix 2 things:
+
+1. Indicate the proper (absolute or relative) directory where mORMot2 is located. Edit the paths within `<search_paths>` in `CastleEngineManifest.xml` files.
+
+    By default, these files assume you have `mORMot2` directory as a sibling of `castle-and-mormot-collaborative-editing` directory. If you have any other setup, you need to fix the `CastleEngineManifest.xml` files.
+
+ 2. Indicate the proper path to static files. Edit the paths within `<library_paths>` in `CastleEngineManifest.xml` files.
+
+    By default, these files assume you build for `win64` (and, just like above, `mORMot2` and `castle-and-mormot-collaborative-editing` are siblings).
+
+NOTE: We plan to introduce [Castle Game Engine packages](https://castle-engine.io/roadmap#packages) which will make this process easier, you should not need to edit `CastleEngineManifest.xml` files in the future.
 
 NOTE: There's no need to edit the `CastleEngineManifest.xml` files if you build using Lazarus or Delphi IDEs -- in this case, if you followed the mORMot2 quick-start guide, you're all set.
 
-Both client and server can be built just like all _Castle Game Engine_ projects:
+### Compile and run CGE projects in this repo
+
+Then both client and server can be built just like all _Castle Game Engine_ projects:
 
 Compile by:
 
-- [CGE editor](https://castle-engine.io/editor). Just use menu items _"Compile"_ or _"Compile And Run"_.
+- [CGE editor](https://castle-engine.io/editor). Open each project (`castle_mormot_client` and `castle_mormot_server`). And use menu items _"Compile"_ or _"Compile And Run"_.
 
-- Or use [CGE command-line build tool](https://castle-engine.io/build_tool). Run `castle-engine compile` in this directory.
+- Or use [CGE command-line build tool](https://castle-engine.io/build_tool). Run `castle-engine compile` in the subdirectory of each project, `castle_mormot_client` or `castle_mormot_server`.
 
 - Or use [Lazarus](https://www.lazarus-ide.org/). Open in Lazarus `castle_mormot_client.lpi` (or `castle_mormot_server.lpi`) file and compile / run from Lazarus. Make sure to first register [CGE Lazarus packages](https://castle-engine.io/lazarus).
 

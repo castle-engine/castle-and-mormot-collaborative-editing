@@ -1,5 +1,7 @@
 # Server - Collaborative editing using Castle Game Engine and mORMot2
 
+See [../README.md](../README.md) for general information about this project and how to build it.
+
 Using [Castle Game Engine](https://castle-engine.io/).
 
 ## Building
