@@ -35,6 +35,10 @@ type
     { Every change to this object should increase this number.
       This is used to detect changes to the object. }
     Revision: Int64;
+
+    { Used internally during TViewEdit.TimerPollChanges,
+      used to detect transformations deleted on server. }
+    ExistsAtPollCount: Int64;
   end;
 
   { Descendant of TORM, used by mORMot to synchronize the objects

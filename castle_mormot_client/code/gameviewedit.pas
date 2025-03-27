@@ -35,6 +35,7 @@ type
     ButtonTranslate, ButtonRotate, ButtonScale: TCastleButton;
     EditableAssetsParent: TCastleTransform;
     MainViewport: TCastleViewport;
+    CheckboxSendChangesDuringTransform: TCastleCheckbox;
   private
     { List of URLs of assets that can be placed in TOrmCastleTransform. }
     EditableAssets: TStringList;
@@ -45,6 +46,7 @@ type
     TransformHover: TCastleTransformHover;
     TransformManipulate: TCastleTransformManipulate;
     PollChangesTimer: TCastleTimer;
+    PollCount: Int64; //< number of times we called TimerPollChanges
     procedure FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
@@ -71,10 +73,15 @@ type
     { Set Pressed state of 3 buttons based on TransformManipulate.Mode. }
     procedure UpdateTransformButtons;
 
+    { Send the changes done to SelectedTransform by TransformManipulate
+      to the server. }
+    procedure TransformManipulateSendChanges;
+
     procedure ClickTranslate(Sender: TObject);
     procedure ClickRotate(Sender: TObject);
     procedure ClickScale(Sender: TObject);
     procedure TransformManipulateModified(Sender: TObject);
+    procedure TransformManipulateModifyEnd(Sender: TObject);
 
     { One selected TEditableCastleTransform. }
     function SelectedTransform: TEditableCastleTransform;
@@ -114,6 +121,7 @@ begin
   PollChangesTimer := TCastleTimer.Create(FreeAtStop);
   PollChangesTimer.IntervalSeconds := 1.0;
   PollChangesTimer.OnTimer := {$ifdef FPC}@{$endif} TimerPollChanges;
+  InsertBack(PollChangesTimer);
 
   // assign events
   ButtonAddRandom.OnClick := {$ifdef FPC}@{$endif} ClickAddRandom;
@@ -168,6 +176,7 @@ begin
   TransformManipulate := TCastleTransformManipulate.Create(FreeAtStop);
   TransformManipulate.Mode := mmTranslate;
   TransformManipulate.OnTransformModified := {$ifdef FPC}@{$endif} TransformManipulateModified;
+  TransformManipulate.OnTransformModifyEnd := {$ifdef FPC}@{$endif} TransformManipulateModifyEnd;
 
   UpdateTransformButtons;
 end;
@@ -178,7 +187,7 @@ begin
   inherited;
 end;
 
-procedure TViewEdit.TransformManipulateModified(Sender: TObject);
+procedure TViewEdit.TransformManipulateSendChanges;
 var
   Sel: TEditableCastleTransform;
 begin
@@ -231,14 +240,19 @@ begin
     ]);
 end;
 
+procedure TViewEdit.TransformManipulateModified(Sender: TObject);
+begin
+  if CheckboxSendChangesDuringTransform.Checked then
+    TransformManipulateSendChanges;
+end;
+
+procedure TViewEdit.TransformManipulateModifyEnd(Sender: TObject);
+begin
+  if not CheckboxSendChangesDuringTransform.Checked then
+    TransformManipulateSendChanges;
+end;
+
 procedure TViewEdit.Update(const SecondsPassed: Single; var HandleInput: boolean);
-
-  { Component-wise maximum of two vectors. }
-  function MaxVector(const A, B: TVector3): TVector3;
-  begin
-    Result := Vector3(Max(A.X, B.X), Max(A.Y, B.Y), Max(A.Z, B.Z));
-  end;
-
 begin
   inherited;
 
@@ -451,8 +465,74 @@ begin
 end;
 
 procedure TViewEdit.TimerPollChanges(Sender: TObject);
+
+  function FindTransform(const ID: Int64): TEditableCastleTransform;
+  var
+    T: TCastleTransform;
+  begin
+    for T in EditableAssetsParent do
+      if (T is TEditableCastleTransform) and
+         (TEditableCastleTransform(T).ID = ID) then
+        Exit(TEditableCastleTransform(T));
+    Result := nil;
+  end;
+
+  procedure DetectRemovals;
+  var
+    T: TCastleTransform;
+  begin
+    for T in EditableAssetsParent do
+      if (T is TEditableCastleTransform) and
+        (TEditableCastleTransform(T).ExistsAtPollCount <> PollCount) then
+      begin
+        // other client deleted T.ID
+        T.Free; // this also removes T from the EditableAssetsParent list
+      end;
+  end;
+
+var
+  AllOrmTransforms: TObjectList;
+  OrmTransformObj: Pointer;
+  OrmTransform: TOrmCastleTransform;
+  Transform: TEditableCastleTransform;
 begin
-  // TODO
+  AllOrmTransforms := HttpClient.RetrieveList(TOrmCastleTransform, '', []);
+  if AllOrmTransforms = nil then
+  begin
+    WritelnWarning('Polling failed to retrieve the data, is the server running?');
+    Exit;
+  end;
+
+  Inc(PollCount);
+
+  for OrmTransformObj in AllOrmTransforms do
+  begin
+    OrmTransform := TObject(OrmTransformObj) as TOrmCastleTransform;
+
+    Transform := FindTransform(OrmTransform.ID);
+    if Transform <> nil then
+    begin
+      if Transform.Revision < OrmTransform.Revision then
+        // other client modified OrmTransform.ID
+        OrmTransform.UpdateToTransform(Transform)
+      else
+      if Transform.Revision > OrmTransform.Revision then
+      begin
+        WritelnWarning('Server has older revision than client of ID %d, this should not happen', [OrmTransform.ID]);
+      end;
+    end else
+    begin
+      // other client added OrmTransform.ID
+      Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
+      EditableAssetsParent.Add(Transform);
+    end;
+    Transform.ExistsAtPollCount := PollCount;
+
+    // FreeAndNil(OrmTransform); // do not free OrmTransform, it will get freed by FreeAndNil(AllOrmTransforms)
+  end;
+  FreeAndNil(AllOrmTransforms);
+
+  DetectRemovals;
 end;
 
 end.
