@@ -1,5 +1,5 @@
 {
-  Copyright 2024-2024 Michalis Kamburelis.
+  Copyright 2024-2025 Michalis Kamburelis.
 
   This is free software; see the file LICENSE,
   included in this distribution, for details about the copyright.
@@ -21,10 +21,27 @@ uses Classes,
   CastleTransform;
 
 type
-  { A 3D object that can be send over the network and persisted.
-    This maps to a Castle Game Engine component
-    with TCastleTransform and TCastleScene / TCastleSphere / TCastleBox.
-    On mORMot side, this can be send over the network and persisted to database. }
+  { Descendant of TCastleTransform, that can be edited in this application,
+    and can be synchronized over the network and persisted to database.
+
+    This class, above TCastleTransform capabilities (displaying and transform
+    a 3D object), stores additional information to synchronize this object. }
+  TEditableCastleTransform = class(TCastleTransform)
+  public
+    { Unique identifier of the ORM object corresponding to this TCastleTransform.
+      This is used to synchronize the object over the network and in the database. }
+    ID: TID;
+
+    { Every change to this object should increase this number.
+      This is used to detect changes to the object. }
+    Revision: Int64;
+  end;
+
+  { Descendant of TORM, used by mORMot to synchronize the objects
+    that can be edited in this application.
+    Instances of this can be send over the network and persisted to database.
+    Corresponds to the TEditableCastleTransform used by Castle Game Engine
+    to display and edit it. }
   TOrmCastleTransform = class(TOrm)
   private
     FName: RawUTF8;
@@ -52,23 +69,24 @@ type
     FScaleX: Double;
     FScaleY: Double;
     FScaleZ: Double;
+    FRevision: Int64;
   public
-    { Create TCastleTransform instance corresponding to this ORM state.
+    { Create TEditableCastleTransform instance corresponding to this ORM state.
 
-      Owner is the owner of the created TCastleTransform instance.
+      Owner is the owner of the created TEditableCastleTransform instance.
       Caller is responsible for freeing the result.
 
       Inside it, there may be a child (like TCastleScene) created,
       which is owned by the returned TCastleTransform instance. }
-    function CreateTransform(const Owner: TComponent): TCastleTransform;
+    function CreateTransform(const Owner: TComponent): TEditableCastleTransform;
 
     { Update an existing TCastleTransform instance to reflect state of this ORM. }
-    procedure UpdateToTransform(const Instance: TCastleTransform);
+    procedure UpdateToTransform(const Instance: TEditableCastleTransform);
 
     { Set the state of this ORM to reflect the state of the given TCastleTransform.
       This is the reverse of UpdateToTransform.
       Note that it doesn't synchronize ID, as ID is not supposed to be changed this way. }
-    procedure UpdateFromTransform(const Instance: TCastleTransform);
+    procedure UpdateFromTransform(const Instance: TEditableCastleTransform);
   published
     { Unique name that identifies the object.
       Will be used for TComponent.Name of CGE components. }
@@ -84,6 +102,8 @@ type
     property ScaleX: Double read FScaleX write FScaleX;
     property ScaleY: Double read FScaleY write FScaleY;
     property ScaleZ: Double read FScaleZ write FScaleZ;
+    { See @link(TEditableCastleTransform.Revision). }
+    property Revision: Int64 read FRevision write FRevision;
   end;
 
 { Instance of TOrmModel that can deal with TOrmCastleTransform. }
@@ -102,13 +122,13 @@ end;
 
 { TOrmCastleTransform ------------------------------------------------------- }
 
-function TOrmCastleTransform.CreateTransform(const Owner: TComponent): TCastleTransform;
+function TOrmCastleTransform.CreateTransform(const Owner: TComponent): TEditableCastleTransform;
 begin
-  Result := TCastleTransform.Create(Owner);
+  Result := TEditableCastleTransform.Create(Owner);
   UpdateToTransform(Result);
 end;
 
-procedure TOrmCastleTransform.UpdateToTransform(const Instance: TCastleTransform);
+procedure TOrmCastleTransform.UpdateToTransform(const Instance: TEditableCastleTransform);
 
   procedure ClearChildren;
   begin
@@ -134,10 +154,8 @@ var
   Box: TCastleBox;
   UrlString: String;
 begin
-  {$ifdef CPU32}
-    {$message warn 'TODO: This code is not safe on 32-bit platforms, as it assumes Tag can hold 64-bit ID.'}
-  {$endif}
-  Instance.Tag := ID;
+  Instance.ID := ID;
+  Instance.Revision := FRevision;
   Instance.Name := Utf8ToString(FName);
   Instance.Translation := Vector3(FTranslationX, FTranslationY, FTranslationZ);
   Instance.Rotation := Vector4(FRotationX, FRotationY, FRotationZ, FRotationW);
@@ -170,7 +188,7 @@ begin
   end;
 end;
 
-procedure TOrmCastleTransform.UpdateFromTransform(const Instance: TCastleTransform);
+procedure TOrmCastleTransform.UpdateFromTransform(const Instance: TEditableCastleTransform);
 var
   Child: TCastleTransform;
 begin
@@ -186,6 +204,7 @@ begin
   FScaleX := Instance.Scale.X;
   FScaleY := Instance.Scale.Y;
   FScaleZ := Instance.Scale.Z;
+  FRevision := Instance.Revision;
   if Instance.Count > 0 then
   begin
     Child := Instance[0];

@@ -1,5 +1,5 @@
 {
-  Copyright 2024-2024 Michalis Kamburelis.
+  Copyright 2024-2025 Michalis Kamburelis.
 
   This is free software; see the file LICENSE,
   included in this distribution, for details about the copyright.
@@ -44,6 +44,7 @@ type
     EditableAssetsOwner: TComponent;
     TransformHover: TCastleTransformHover;
     TransformManipulate: TCastleTransformManipulate;
+    PollChangesTimer: TCastleTimer;
     procedure FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
     procedure ClickAddRandom(Sender: TObject);
     procedure ClickAddSphere(Sender: TObject);
@@ -51,6 +52,7 @@ type
     procedure ClickDuplicate(Sender: TObject);
     procedure ClickDelete(Sender: TObject);
     procedure ClickClearAll(Sender: TObject);
+    procedure TimerPollChanges(Sender: TObject);
 
     { Create new TOrmCastleTransform instance initialized with mostly random values.
       The URL will be NewUrl.
@@ -74,8 +76,8 @@ type
     procedure ClickScale(Sender: TObject);
     procedure TransformManipulateModified(Sender: TObject);
 
-    { One selected TCastleTransform. }
-    function SelectedTransform: TCastleTransform;
+    { One selected TEditableCastleTransform. }
+    function SelectedTransform: TEditableCastleTransform;
   public
     constructor Create(AOwner: TComponent); override;
     procedure Start; override;
@@ -105,9 +107,13 @@ var
   AllOrmTransforms: TObjectList;
   OrmTransformObj: Pointer;
   OrmTransform: TOrmCastleTransform;
-  Transform: TCastleTransform;
+  Transform: TEditableCastleTransform;
 begin
   inherited;
+
+  PollChangesTimer := TCastleTimer.Create(FreeAtStop);
+  PollChangesTimer.IntervalSeconds := 1.0;
+  PollChangesTimer.OnTimer := {$ifdef FPC}@{$endif} TimerPollChanges;
 
   // assign events
   ButtonAddRandom.OnClick := {$ifdef FPC}@{$endif} ClickAddRandom;
@@ -174,7 +180,7 @@ end;
 
 procedure TViewEdit.TransformManipulateModified(Sender: TObject);
 var
-  Sel: TCastleTransform;
+  Sel: TEditableCastleTransform;
 begin
   { TODO: This code to update feels a bit dirty -- calling UpdateField
     3 or 4 times is probably not optimal, and in general it feels not cool
@@ -184,7 +190,7 @@ begin
 
     However, we don't have TOrmCastleTransform instance at this point.
     We could make it... but it would not have correct ID, as TOrm.ID is read-only,
-    we cannot just set it from Sel.Tag.
+    we cannot just set it from Sel.ID.
     In general, all HttpClient.Orm.Update* feel a bit unsuitable for this case.
 
     There are no practical problems with this though, so maybe just accept
@@ -194,28 +200,35 @@ begin
   case TransformManipulate.Mode of
     mmTranslate:
       begin
-        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationX', Sel.Translation.X) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationY', Sel.Translation.Y) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'TranslationZ', Sel.Translation.Z) then
-          raise Exception.Create('Failed to update the server');
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'TranslationX', Sel.Translation.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'TranslationY', Sel.Translation.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'TranslationZ', Sel.Translation.Z) then
+          raise Exception.CreateFmt('Failed to update the server state of TOrmCastleTransform with ID %d', [Sel.ID]);
       end;
     mmRotate:
       begin
-        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationX', Sel.Rotation.X) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationY', Sel.Rotation.Y) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationZ', Sel.Rotation.Z) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'RotationW', Sel.Rotation.W) then
-          raise Exception.Create('Failed to update the server');
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'RotationX', Sel.Rotation.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'RotationY', Sel.Rotation.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'RotationZ', Sel.Rotation.Z) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'RotationW', Sel.Rotation.W) then
+          raise Exception.CreateFmt('Failed to update the server state of TOrmCastleTransform with ID %d', [Sel.ID]);
       end;
     mmScale:
       begin
-        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleX', Sel.Scale.X) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleY', Sel.Scale.Y) or
-           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.Tag, 'ScaleZ', Sel.Scale.Z) then
-          raise Exception.Create('Failed to update the server');
+        if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'ScaleX', Sel.Scale.X) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'ScaleY', Sel.Scale.Y) or
+           not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'ScaleZ', Sel.Scale.Z) then
+          raise Exception.CreateFmt('Failed to update the server state of TOrmCastleTransform with ID %d', [Sel.ID]);
       end;
     else raise EInternalError.Create('TransformMode?');
   end;
+
+  Inc(Sel.Revision);
+  if not HttpClient.Orm.UpdateField(TOrmCastleTransform, Sel.ID, 'Revision', Sel.Revision) then
+    raise Exception.CreateFmt('Failed to update the revision of TOrmCastleTransform with ID %d to %d', [
+      Sel.ID,
+      Sel.Revision
+    ]);
 end;
 
 procedure TViewEdit.Update(const SecondsPassed: Single; var HandleInput: boolean);
@@ -236,11 +249,9 @@ begin
 
   // update VisualizeHover
   if (MainViewport.TransformUnderMouse <> nil) and
-     (MainViewport.TransformUnderMouse.Parent <> nil) and
-     (MainViewport.TransformUnderMouse.Parent.Parent = EditableAssetsParent) then
-    { We use TransformUnderMouse.Parent, because this TCastleTransform
-      corresponds to TOrmCastleTransform, and has Tag equal ORM ID,
-      which is critical to synchronize operations with the server. }
+     (MainViewport.TransformUnderMouse.Parent is TEditableCastleTransform) then
+    { We use TransformUnderMouse.Parent, because we want to track
+      the TEditableCastleTransform, that contains ID for ORM synchronization. }
     TransformHover.Current := MainViewport.TransformUnderMouse.Parent
   else
     TransformHover.Current := nil;
@@ -358,7 +369,7 @@ end;
 
 procedure TViewEdit.ClickDuplicate(Sender: TObject);
 var
-  Sel: TCastleTransform;
+  Sel: TEditableCastleTransform;
   Orm: TOrmCastleTransform;
 begin
   Sel := SelectedTransform;
@@ -380,15 +391,14 @@ end;
 
 procedure TViewEdit.ClickDelete(Sender: TObject);
 var
-  Sel: TCastleTransform;
+  Sel: TEditableCastleTransform;
 begin
   Sel := SelectedTransform;
   if Sel <> nil then
   begin
-    { Remove from the server.
-      We know that TCastleTransform.Tag holds the ID of the TOrmCastleTransform. }
-    WriteLnLog('Deleting from server: %d', [Sel.Tag]);
-    if not HttpClient.Orm.Delete(TOrmCastleTransform, Sel.Tag) then
+    { Remove from the server. }
+    WriteLnLog('Deleting from server: %d', [Sel.ID]);
+    if not HttpClient.Orm.Delete(TOrmCastleTransform, Sel.ID) then
       raise Exception.Create('Failed to delete from the server');
     Sel.Free; // this also clears SelectedTransform
   end;
@@ -429,14 +439,20 @@ begin
   UpdateTransformButtons;
 end;
 
-function TViewEdit.SelectedTransform: TCastleTransform;
+function TViewEdit.SelectedTransform: TEditableCastleTransform;
 begin
   { TransformManipulate supports multiple transforms being selected at once,
     but we only allow one selected at a time in this demo. }
-  if TransformManipulate.SelectedCount = 1 then
-    Result := TransformManipulate.Selected[0]
+  if (TransformManipulate.SelectedCount = 1) and
+     (TransformManipulate.Selected[0] is TEditableCastleTransform) then
+    Result := TEditableCastleTransform(TransformManipulate.Selected[0])
   else
     Result := nil;
+end;
+
+procedure TViewEdit.TimerPollChanges(Sender: TObject);
+begin
+  // TODO
 end;
 
 end.

@@ -31,6 +31,8 @@ The state of the 3D world is _persistent_. That is, all the operations on 3D obj
 
 Note that the current camera and selection state is *not* saved, deliberately. Conceptually, they are not part of the _"3D world state"_. Also, we wanted to keep this example code simple :) But saving them could be easily addded, as additional ORM classes.
 
+The state of world is also _synchronized with all the clients_. For example, if one client moves a given object, or adds a new object, the change appears ~instantly in all the other clients.
+
 ## Screenshots
 
 ![Screenshot 1](screenshot1.png)
@@ -54,6 +56,30 @@ This uses ORM to synchronize the 3D world between the server and clients.
 The main unit where the ORM state is visualized and manipulated is [GameViewEdit](https://github.com/castle-engine/castle-and-mormot-collaborative-editing/blob/master/castle_mormot_client/code/gameviewedit.pas).
 
 The _mORMot_ usage in this demo follows a simple example [ex/ThirdPartyDemos/martin-doyle/02-HttpClientServerORM/](https://github.com/synopse/mORMot2/tree/master/ex/ThirdPartyDemos/martin-doyle/02-HttpClientServerORM/src). If you want to explore this approach without _Castle Game Engine_, you can start with that example.
+
+### How do all the clients show the same world?
+
+We synchronize all the clients with the server state, so that all clients see all the modifications done by the other clients. We have implemented this using a simple polling mechanism.
+
+Details:
+
+- The world that we edit and synchronize is a list of `TEditableCastleTransform` instances.
+
+- The `TEditableCastleTransform` is a descendant of `TCastleTransform` used for displaying object in _Castle Game Engine_ (see https://castle-engine.io/viewport_and_scenes ).
+
+- It has an additional revision number `TEditableCastleTransform.Revision`, incremented at each change. E.g. when you change the `MyTransform.Translation` by moving the object, we also increment the `MyTransform.Revision`.
+
+All the clients just occasionally "poll" the server (ask for the current data of all `TEditableCastleTransform` instances), checking if any change occured (some transformation was added, removed, or changed).
+
+Note: This is meant to be a *simple* solution, and not necessarily efficient. It would be more efficient to avoid the network traffic caused by polling, esp. since most of the time -> nothing changed. Ideas for improvement:
+
+- To completely avoid polling, a 2-way communication would be nice, in which a server can notify clients about changes that occurred. But this would be more complex, it's no longer a simple REST API (in which only the client can initiate the request to server). mORMot has support for WebSockets (maybe also lower-level regular TCP/IP sockets?) so implementing such 2-way communication is surely possible, we just didn't do it in this example.
+
+- Solutions that still use polling but in a more efficient way are also possible.
+
+    - We could increase the frequency of polling right after a change occurred. Then gradually decrease it when no changes are detected for some time.
+
+    - We could do the polling (with increased frequency) only for a specific transformation that changed last. This assumes that a single object is usually edited (e.g. moved, rotated) multiple times.
 
 ## Building
 
