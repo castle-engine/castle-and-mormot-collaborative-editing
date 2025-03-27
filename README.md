@@ -139,6 +139,6 @@ Compile by:
 
 ## Authors and license
 
-Copyright 2024 by Michalis Kamburelis.
+Copyright 2024-2025 by Michalis Kamburelis.
 
 Licence: permissive 3-clause BSD license. Basically do what you want, just keep the copyright notice.
