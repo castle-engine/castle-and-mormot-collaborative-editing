@@ -25,7 +25,7 @@ uses SysUtils,
   {$region 'Castle Initialization Uses'}
   // The content here may be automatically updated by CGE editor.
   , GameViewMenu
-  , GameViewedit
+  , GameViewEdit
   {$endregion 'Castle Initialization Uses'};
 
 var
@@ -41,7 +41,7 @@ begin
   {$region 'Castle View Creation'}
   // The content here may be automatically updated by CGE editor.
   ViewMenu := TViewMenu.Create(Application);
-  Viewedit := TViewedit.Create(Application);
+  ViewEdit := TViewEdit.Create(Application);
   {$endregion 'Castle View Creation'}
 
   Window.Container.View := ViewMenu;

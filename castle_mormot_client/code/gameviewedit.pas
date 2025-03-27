@@ -12,7 +12,7 @@
 }
 
 { Edit the world. }
-unit GameViewedit;
+unit GameViewEdit;
 
 interface
 
@@ -24,7 +24,7 @@ uses Classes,
 
 type
   { View to edit the world. }
-  TViewedit = class(TCastleView)
+  TViewEdit = class(TCastleView)
   published
     { Components designed using CGE editor.
       These fields will be automatically initialized at Start. }
@@ -85,7 +85,7 @@ type
   end;
 
 var
-  Viewedit: TViewedit;
+  ViewEdit: TViewEdit;
 
 implementation
 
@@ -94,13 +94,13 @@ uses SysUtils, Contnrs, Math,
   CastleStringUtils, CastleClassUtils, CastleLog, CastleUriUtils, CastleColors,
   GameConnection, CastleUtils;
 
-constructor TViewedit.Create(AOwner: TComponent);
+constructor TViewEdit.Create(AOwner: TComponent);
 begin
   inherited;
   DesignUrl := 'castle-data:/gameviewedit.castle-user-interface';
 end;
 
-procedure TViewedit.Start;
+procedure TViewEdit.Start;
 var
   AllOrmTransforms: TObjectList;
   OrmTransformObj: Pointer;
@@ -166,13 +166,13 @@ begin
   UpdateTransformButtons;
 end;
 
-procedure TViewedit.Stop;
+procedure TViewEdit.Stop;
 begin
   FreeAndNil(EditableAssets);
   inherited;
 end;
 
-procedure TViewedit.TransformManipulateModified(Sender: TObject);
+procedure TViewEdit.TransformManipulateModified(Sender: TObject);
 var
   Sel: TCastleTransform;
 begin
@@ -218,7 +218,7 @@ begin
   end;
 end;
 
-procedure TViewedit.Update(const SecondsPassed: Single; var HandleInput: boolean);
+procedure TViewEdit.Update(const SecondsPassed: Single; var HandleInput: boolean);
 
   { Component-wise maximum of two vectors. }
   function MaxVector(const A, B: TVector3): TVector3;
@@ -246,7 +246,7 @@ begin
     TransformHover.Current := nil;
 end;
 
-function TViewedit.Press(const Event: TInputPressRelease): Boolean;
+function TViewEdit.Press(const Event: TInputPressRelease): Boolean;
 begin
   Result := inherited;
   if Result then Exit;
@@ -258,7 +258,7 @@ begin
   end;
 end;
 
-procedure TViewedit.FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
+procedure TViewEdit.FoundEditableAsset(const FileInfo: TFileInfo; var StopSearch: boolean);
 var
   Url: String;
 begin
@@ -272,7 +272,7 @@ begin
   //WritelnLog('Found editable asset: ' + Url);
 end;
 
-function TViewedit.NewOrmCastleTransform(const NewUrl: String): TOrmCastleTransform;
+function TViewEdit.NewOrmCastleTransform(const NewUrl: String): TOrmCastleTransform;
 begin
   Result := TOrmCastleTransform.Create;
 
@@ -287,7 +287,7 @@ begin
   Result.ScaleZ := 1;
 end;
 
-procedure TViewedit.NewEditableAsset(const OrmTransform: TOrmCastleTransform);
+procedure TViewEdit.NewEditableAsset(const OrmTransform: TOrmCastleTransform);
 
   function MakeValidPascalIdent(const S: String): String;
   begin
@@ -326,7 +326,7 @@ begin
   TransformManipulate.SetSelected([Transform]);
 end;
 
-procedure TViewedit.ClickAddRandom(Sender: TObject);
+procedure TViewEdit.ClickAddRandom(Sender: TObject);
 var
   Orm: TOrmCastleTransform;
 begin
@@ -336,7 +336,7 @@ begin
   finally FreeAndNil(Orm) end;
 end;
 
-procedure TViewedit.ClickAddSphere(Sender: TObject);
+procedure TViewEdit.ClickAddSphere(Sender: TObject);
 var
   Orm: TOrmCastleTransform;
 begin
@@ -346,7 +346,7 @@ begin
   finally FreeAndNil(Orm) end;
 end;
 
-procedure TViewedit.ClickAddBox(Sender: TObject);
+procedure TViewEdit.ClickAddBox(Sender: TObject);
 var
   Orm: TOrmCastleTransform;
 begin
@@ -356,7 +356,7 @@ begin
   finally FreeAndNil(Orm) end;
 end;
 
-procedure TViewedit.ClickDuplicate(Sender: TObject);
+procedure TViewEdit.ClickDuplicate(Sender: TObject);
 var
   Sel: TCastleTransform;
   Orm: TOrmCastleTransform;
@@ -378,7 +378,7 @@ begin
   end;
 end;
 
-procedure TViewedit.ClickDelete(Sender: TObject);
+procedure TViewEdit.ClickDelete(Sender: TObject);
 var
   Sel: TCastleTransform;
 begin
@@ -394,7 +394,7 @@ begin
   end;
 end;
 
-procedure TViewedit.ClickClearAll(Sender: TObject);
+procedure TViewEdit.ClickClearAll(Sender: TObject);
 begin
   while EditableAssetsParent.Count > 0 do
     EditableAssetsParent[0].Free; // this also removes from the list
@@ -404,32 +404,32 @@ begin
   HttpClient.Orm.Delete(TOrmCastleTransform, '1=1', []);
 end;
 
-procedure TViewedit.UpdateTransformButtons;
+procedure TViewEdit.UpdateTransformButtons;
 begin
   ButtonTranslate.Pressed := TransformManipulate.Mode = mmTranslate;
   ButtonRotate.Pressed := TransformManipulate.Mode = mmRotate;
   ButtonScale.Pressed := TransformManipulate.Mode = mmScale;
 end;
 
-procedure TViewedit.ClickTranslate(Sender: TObject);
+procedure TViewEdit.ClickTranslate(Sender: TObject);
 begin
   TransformManipulate.Mode := mmTranslate;
   UpdateTransformButtons;
 end;
 
-procedure TViewedit.ClickRotate(Sender: TObject);
+procedure TViewEdit.ClickRotate(Sender: TObject);
 begin
   TransformManipulate.Mode := mmRotate;
   UpdateTransformButtons;
 end;
 
-procedure TViewedit.ClickScale(Sender: TObject);
+procedure TViewEdit.ClickScale(Sender: TObject);
 begin
   TransformManipulate.Mode := mmScale;
   UpdateTransformButtons;
 end;
 
-function TViewedit.SelectedTransform: TCastleTransform;
+function TViewEdit.SelectedTransform: TCastleTransform;
 begin
   { TransformManipulate supports multiple transforms being selected at once,
     but we only allow one selected at a time in this demo. }
