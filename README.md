@@ -35,6 +35,7 @@ The state of world is also _synchronized with all the clients_. For example, if 
 
 ## Screenshots
 
+![Screenshot 0](screenshot0.png)
 ![Screenshot 1](screenshot1.png)
 ![Screenshot 2](screenshot2.png)
 ![Screenshot 3](screenshot3.png)
