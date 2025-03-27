@@ -119,7 +119,10 @@ begin
   inherited;
 
   PollChangesTimer := TCastleTimer.Create(FreeAtStop);
-  PollChangesTimer.IntervalSeconds := 1.0;
+  { Poll changes 15 times per second. This is quite a lot.
+    See README.md for notes why this whole "polling" approach is inefficient,
+    and how to improve it. }
+  PollChangesTimer.IntervalSeconds := 1 / 15;
   PollChangesTimer.OnTimer := {$ifdef FPC}@{$endif} TimerPollChanges;
   InsertBack(PollChangesTimer);
 
@@ -480,13 +483,17 @@ procedure TViewEdit.TimerPollChanges(Sender: TObject);
   procedure DetectRemovals;
   var
     T: TCastleTransform;
+    ET: TEditableCastleTransform;
   begin
     for T in EditableAssetsParent do
-      if (T is TEditableCastleTransform) and
-        (TEditableCastleTransform(T).ExistsAtPollCount <> PollCount) then
+      if T is TEditableCastleTransform then
       begin
-        // other client deleted T.ID
-        T.Free; // this also removes T from the EditableAssetsParent list
+        ET := TEditableCastleTransform(T);
+        if ET.ExistsAtPollCount <> PollCount then
+        begin
+          WritelnLog('Polling', 'Other client DELETED transform %d', [ET.ID]);
+          ET.Free; // this also removes ET from the EditableAssetsParent list
+        end;
       end;
   end;
 
@@ -513,16 +520,17 @@ begin
     if Transform <> nil then
     begin
       if Transform.Revision < OrmTransform.Revision then
-        // other client modified OrmTransform.ID
+      begin
+        WritelnLog('Polling', 'Other client MODIFIED transform %d', [OrmTransform.ID]);
         OrmTransform.UpdateToTransform(Transform)
-      else
+      end else
       if Transform.Revision > OrmTransform.Revision then
       begin
-        WritelnWarning('Server has older revision than client of ID %d, this should not happen', [OrmTransform.ID]);
+        WritelnWarning('Server has older revision than client of transform %d, this should not happen', [OrmTransform.ID]);
       end;
     end else
     begin
-      // other client added OrmTransform.ID
+      WritelnLog('Polling', 'Other client ADDED transform %d', [OrmTransform.ID]);
       Transform := OrmTransform.CreateTransform(EditableAssetsOwner);
       EditableAssetsParent.Add(Transform);
     end;
