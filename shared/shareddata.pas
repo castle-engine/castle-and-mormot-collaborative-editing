@@ -53,7 +53,8 @@ type
     { URL of the model file.
       May be
       @unorderedList(
-        @item(@code(castle-data:/xxx) to refer to a file inside the data directory,
+        @item(@code(castle-data:/editable_assets/...)
+          to refer to a file inside the data directory,
           these files are assumed to be available in all clients and equal.
           This results in TCastleScene with given URL.)
         @item(@code(castle-primitive:/sphere) -> TCastleSphere.)
@@ -117,7 +118,8 @@ implementation
 
 uses SysUtils,
   Mormot.Core.Unicode,
-  CastleUriUtils, CastleScene, CastleVectors, CastleLog, CastleUtils;
+  CastleUriUtils, CastleScene, CastleVectors, CastleLog, CastleUtils,
+  CastleStringUtils;
 
 function CreateOrmModel: TOrmModel;
 begin
@@ -175,7 +177,10 @@ begin
     Box := MakeChildClass(TCastleBox) as TCastleBox;
     Box.PreciseCollisions := true;
   end else
-  if UriProtocol(UrlString) = 'castle-data' then
+  //if UriProtocol(UrlString) = 'castle-data' then
+  // Stronger check, for security, to prevent tricking all
+  // the clients to load arbitrary file:/ or http(s):/ ... resources.
+  if IsPrefix('castle-data:/editable_assets/', UrlString) then
   begin
     Scene := MakeChildClass(TCastleScene) as TCastleScene;
     Scene.PreciseCollisions := true;
