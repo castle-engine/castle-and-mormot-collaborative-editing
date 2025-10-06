@@ -60,8 +60,8 @@ begin
       SampleServer.DB.LockingMode := lmExclusive;
       SampleServer.Server.CreateMissingTables;
       HttpServer := TRestHttpServer.Create(HttpPort,[SampleServer],'+',HTTP_DEFAULT_MODE, 4);
-      HttpServer.AccessControlAllowOrigin := '*';
       try
+        HttpServer.AccessControlAllowOrigin := '*';
         Writeln('Server started on port ' + HttpPort);
         Readln;
       finally
